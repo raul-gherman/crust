@@ -12,4 +12,4 @@ jobs:
           command: cargo test
       - run:
           name: Build
-          command: carbo build
+          command: cargo build
