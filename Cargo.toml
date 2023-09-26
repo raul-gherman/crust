@@ -2,7 +2,7 @@
 authors = ["raul-gherman"]
 edition = "2021"
 name = "crust"
-version = "8.6.3"
+version = "8.8.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

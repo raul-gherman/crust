@@ -115,7 +115,7 @@ dependencies = [
 
 [[package]]
 name = "crust"
-version = "8.6.3"
+version = "8.8.0"
 dependencies = [
  "chrono",
  "prost",

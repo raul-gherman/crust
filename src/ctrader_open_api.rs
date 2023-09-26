@@ -1,13 +1,14 @@
+/// Base message that is used for all messages that are sent to/from Open API proxy of cTrader platform.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoMessage {
-    /// Contains id of ProtoPayloadType or other custom PayloadTypes (e.g. ProtoOAPayloadType)
+    /// Contains id of ProtoPayloadType or other custom PayloadTypes (e.g. ProtoOAPayloadType).
     #[prost(uint32, required, tag = "1")]
     pub payload_type: u32,
-    /// Serialized protobuf message that corresponds to payloadType
+    /// Serialized protobuf message that corresponds to payloadType.
     #[prost(bytes = "vec", optional, tag = "2")]
     pub payload: ::core::option::Option<::prost::alloc::vec::Vec<u8>>,
-    /// Request message id, assigned by the client that will be returned in the response
+    /// Request message id, assigned by the client that will be returned in the response.
     #[prost(string, optional, tag = "3")]
     pub client_msg_id: ::core::option::Option<::prost::alloc::string::String>,
 }
@@ -21,18 +22,18 @@ pub struct ProtoErrorRes {
         default = "ErrorRes"
     )]
     pub payload_type: ::core::option::Option<i32>,
-    /// Contains name of ProtoErrorCode or other custom ErrorCodes (e.g. ProtoCHErrorCode)
+    /// Contains name of ProtoErrorCode or other custom ErrorCodes (e.g. ProtoCHErrorCode).
     #[prost(string, required, tag = "2")]
     pub error_code: ::prost::alloc::string::String,
-    /// Error description
+    /// Error description.
     #[prost(string, optional, tag = "3")]
     pub description: ::core::option::Option<::prost::alloc::string::String>,
-    /// CS-10489 Epoch timestamp in second
+    /// The Unix time in milliseconds of the end of the maintenance.
     #[prost(uint64, optional, tag = "4")]
     pub maintenance_end_timestamp: ::core::option::Option<u64>,
 }
 /// Event that is sent from Open API proxy and can be used as criteria that connection is healthy when no other messages are sent by cTrader platform
-/// Open API client can send this message when it needs to keep the connection open for a period longer than 30 seconds without other messages
+/// Open API client can send this message when it needs to keep the connection open for a period longer than 30 seconds without other messages.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoHeartbeatEvent {
@@ -215,7 +216,7 @@ pub struct ProtoOaSymbol {
     /// Percentage (1 = 0.01%) of the realized Gross Profit, which will be paid by the Trader for any trade if the Quote Asset of the traded Symbol is not matched with the Deposit Asset.
     #[prost(int32, optional, tag = "34")]
     pub pnl_conversion_fee_rate: ::core::option::Option<i32>,
-    /// The unique identifier of dynamic leverage entity. <https://help.ctrader.com/ctrader/trading-with-ctrader/dynamic-leverage>
+    /// The unique identifier of dynamic leverage entity. <https://help.ctrader.com/ctrader/trading/dynamic-leverage>
     #[prost(int64, optional, tag = "35")]
     pub leverage_id: ::core::option::Option<i64>,
     /// swap is calculated every swapPeriod hours
@@ -265,12 +266,16 @@ pub struct ProtoOaLightSymbol {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaArchivedSymbol {
+    /// The unique identifier of the symbol in specific server environment within cTrader platform. Different brokers might have different IDs.
     #[prost(int64, required, tag = "1")]
     pub symbol_id: i64,
+    /// Name of the symbol (e.g. EUR/USD).
     #[prost(string, required, tag = "2")]
     pub name: ::prost::alloc::string::String,
+    /// The Unix time in milliseconds of the last update of the symbol.
     #[prost(int64, required, tag = "3")]
     pub utc_last_update_timestamp: i64,
+    /// Description of the symbol.
     #[prost(string, optional, tag = "4")]
     pub description: ::core::option::Option<::prost::alloc::string::String>,
 }
@@ -358,7 +363,7 @@ pub struct ProtoOaTrader {
     /// Some whitelabel assigned to trader by broker at the moment of account creation.
     #[prost(string, optional, tag = "16")]
     pub broker_name: ::core::option::Option<::prost::alloc::string::String>,
-    /// Unix timestamp of the account registration. Should be used as minimal date in historical data requests.
+    /// The Unix timestamp in milliseconds of the account registration. Should be used as minimal date in historical data requests.
     #[prost(int64, optional, tag = "17")]
     pub registration_timestamp: ::core::option::Option<i64>,
     /// If TRUE then account is compliant to use specific margin calculation strategy.
@@ -392,7 +397,7 @@ pub struct ProtoOaTradeData {
     /// Buy, Sell.
     #[prost(enumeration = "ProtoOaTradeSide", required, tag = "3")]
     pub trade_side: i32,
-    /// Time when position was opened or order was created.
+    /// The Unix time in milliseconds when position was opened or order was created.
     #[prost(int64, optional, tag = "4")]
     pub open_timestamp: ::core::option::Option<i64>,
     /// Text label specified during order request.
@@ -407,7 +412,7 @@ pub struct ProtoOaTradeData {
     /// Specifies the units in which the Symbol is denominated.
     #[prost(string, optional, tag = "8")]
     pub measurement_units: ::core::option::Option<::prost::alloc::string::String>,
-    /// The UNIX timestamp in milliseconds when a Position was closed
+    /// The Unix time in milliseconds when a Position was closed
     #[prost(uint64, optional, tag = "9")]
     pub close_timestamp: ::core::option::Option<u64>,
 }
@@ -436,7 +441,7 @@ pub struct ProtoOaPosition {
     /// Current take profit price.
     #[prost(double, optional, tag = "7")]
     pub take_profit: ::core::option::Option<f64>,
-    /// Time of the last change of the position, including amend SL/TP of the position, execution of related order, cancel or related order, etc.
+    /// The Unix time in milliseconds of the last change of the position, including amend SL/TP of the position, execution of related order, cancel or related order, etc.
     #[prost(int64, optional, tag = "8")]
     pub utc_last_update_timestamp: ::core::option::Option<i64>,
     /// Current unrealized commission related to the position.
@@ -485,7 +490,7 @@ pub struct ProtoOaOrder {
     /// Order status.
     #[prost(enumeration = "ProtoOaOrderStatus", required, tag = "4")]
     pub order_status: i32,
-    /// If the order has time in force GTD then expiration is specified.
+    /// The Unix time in milliseconds of expiration if the order has time in force GTD.
     #[prost(int64, optional, tag = "6")]
     pub expiration_timestamp: ::core::option::Option<i64>,
     /// Price at which an order was executed. For order with FILLED status.
@@ -494,7 +499,7 @@ pub struct ProtoOaOrder {
     /// Part of the volume that was filled.
     #[prost(int64, optional, tag = "8")]
     pub executed_volume: ::core::option::Option<i64>,
-    /// Timestamp of the last update of the order.
+    /// The Unix time in milliseconds of the last update of the order.
     #[prost(int64, optional, tag = "9")]
     pub utc_last_update_timestamp: ::core::option::Option<i64>,
     /// Used for Market Range order with combination of slippageInPoints to specify price range were order can be executed.
@@ -575,7 +580,7 @@ pub struct ProtoOaBonusDepositWithdraw {
     /// Amount of bonus deposited/withdrew by introducing broker.
     #[prost(int64, required, tag = "6")]
     pub ib_delta: i64,
-    /// Time when the bonus operation was executed.
+    /// The Unix time in milliseconds when the bonus operation was executed.
     #[prost(int64, required, tag = "7")]
     pub change_bonus_timestamp: i64,
     /// Note added to operation. Visible to the trader.
@@ -604,7 +609,7 @@ pub struct ProtoOaDepositWithdraw {
     /// Amount of deposit/withdrawal operation.
     #[prost(int64, required, tag = "4")]
     pub delta: i64,
-    /// Time when deposit/withdrawal operation was executed.
+    /// The Unix time in milliseconds when deposit/withdrawal operation was executed.
     #[prost(int64, required, tag = "5")]
     pub change_balance_timestamp: i64,
     /// Note added to operation. Visible to the trader.
@@ -642,13 +647,13 @@ pub struct ProtoOaDeal {
     /// The unique identifier of the symbol in specific server environment within cTrader platform. Different servers have different IDs.
     #[prost(int64, required, tag = "6")]
     pub symbol_id: i64,
-    /// Time when the deal was sent for execution.
+    /// The Unix time in milliseconds when the deal was sent for execution.
     #[prost(int64, required, tag = "7")]
     pub create_timestamp: i64,
-    /// Time when the deal was executed.
+    /// The Unix time in milliseconds when the deal was executed.
     #[prost(int64, required, tag = "8")]
     pub execution_timestamp: i64,
-    /// Timestamp when the deal was created, executed or rejected.
+    /// The Unix time in milliseconds when the deal was created, executed or rejected.
     #[prost(int64, optional, tag = "9")]
     pub utc_last_update_timestamp: ::core::option::Option<i64>,
     /// Execution price.
@@ -686,7 +691,7 @@ pub struct ProtoOaDealOffset {
     /// Matched volume, in cents.
     #[prost(int64, required, tag = "2")]
     pub volume: i64,
-    /// Time when the offset Deal was executed.
+    /// The Unix time in milliseconds when the offset Deal was executed.
     #[prost(int64, optional, tag = "3")]
     pub execution_timestamp: ::core::option::Option<i64>,
     /// Execution price of the offset Deal.
@@ -697,7 +702,7 @@ pub struct ProtoOaDealOffset {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaClosePositionDetail {
-    /// The entry price of the position for which the closing deal was generated.
+    /// Position price at the moment of filling the closing order.
     #[prost(double, required, tag = "1")]
     pub entry_price: f64,
     /// Amount of realized gross profit after closing deal execution.
@@ -755,7 +760,7 @@ pub struct ProtoOaTrendbar {
     /// Delta between high and low price. high = low + deltaHigh.
     #[prost(uint64, optional, tag = "8")]
     pub delta_high: ::core::option::Option<u64>,
-    /// Timestamp of the bar. Equal to the timestamp of the open tick.
+    /// The Unix time in minutes of the bar, equal to the timestamp of the open tick.
     #[prost(uint32, optional, tag = "9")]
     pub utc_timestamp_in_minutes: ::core::option::Option<u32>,
 }
@@ -777,7 +782,7 @@ pub struct ProtoOaExpectedMargin {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaTickData {
-    /// Tick timestamp.
+    /// The Unix time in milliseconds of the tick. See ProtoOAGetTickDataRes.tickData for details.
     #[prost(int64, required, tag = "1")]
     pub timestamp: i64,
     /// Tick price.
@@ -804,10 +809,10 @@ pub struct ProtoOaCtidTraderAccount {
     /// TraderLogin for a specific account. Value is displayed on Client App UI
     #[prost(int64, optional, tag = "3")]
     pub trader_login: ::core::option::Option<i64>,
-    /// Timestamp of the last ProtoOAClosePositionDetail happened to this account.
+    /// The Unix time in milliseconds of the last ProtoOAClosePositionDetail happened to this account.
     #[prost(int64, optional, tag = "4")]
     pub last_closing_deal_timestamp: ::core::option::Option<i64>,
-    /// Timestamp of the last ProtoOADepositWithdraw happened to this account.
+    /// The Unix time in milliseconds of the last ProtoOADepositWithdraw happened to this account.
     #[prost(int64, optional, tag = "5")]
     pub last_balance_update_timestamp: ::core::option::Option<i64>,
 }
@@ -847,10 +852,13 @@ pub struct ProtoOaDepthQuote {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaMarginCall {
+    /// Type of margin call. All margin calls are similar, only difference is in marginLevelThreshold.
     #[prost(enumeration = "ProtoOaNotificationType", required, tag = "1")]
     pub margin_call_type: i32,
+    /// Margin level threshold for margin call.
     #[prost(double, required, tag = "2")]
     pub margin_level_threshold: f64,
+    /// The Unix time in milliseconds of the last update of the margin call.
     #[prost(int64, optional, tag = "3")]
     pub utc_last_update_timestamp: ::core::option::Option<i64>,
 }
@@ -937,7 +945,7 @@ pub struct ProtoOaErrorRes {
     /// The error description.
     #[prost(string, optional, tag = "4")]
     pub description: ::core::option::Option<::prost::alloc::string::String>,
-    /// The timestamp in seconds when the current maintenance session will be ended.
+    /// The Unix time in seconds when the current maintenance session will be ended.
     #[prost(int64, optional, tag = "5")]
     pub maintenance_end_timestamp: ::core::option::Option<i64>,
 }
@@ -1043,13 +1051,13 @@ pub struct ProtoOaNewOrderReq {
         default = "GoodTillCancel"
     )]
     pub time_in_force: ::core::option::Option<i32>,
-    /// The exact Order expiration time. Should be set for the Good Till Date orders.
+    /// The Unix time in milliseconds of Order expiration time. Should be set for the Good Till Date orders.
     #[prost(int64, optional, tag = "10")]
     pub expiration_timestamp: ::core::option::Option<i64>,
-    /// The absolute Stop Loss price (1.23456 for example). Not supported for MARKET orders; for these orders, please use relativeStopLoss.
+    /// The absolute Stop Loss price (1.23456 for example). Unsupported for MARKET orders; for these orders, please use relativeStopLoss.
     #[prost(double, optional, tag = "11")]
     pub stop_loss: ::core::option::Option<f64>,
-    /// The absolute Take Profit price (1.23456 for example). Not supported for MARKET orders; for these orders, please use relativeTakeProfit.
+    /// The absolute Take Profit price (1.23456 for example). Unsupported for MARKET orders; for these orders, please use relativeTakeProfit.
     #[prost(double, optional, tag = "12")]
     pub take_profit: ::core::option::Option<f64>,
     /// User-specified comment. MaxLength = 512.
@@ -1070,10 +1078,10 @@ pub struct ProtoOaNewOrderReq {
     /// Optional user-specific clientOrderId (similar to FIX ClOrderID). MaxLength = 50.
     #[prost(string, optional, tag = "18")]
     pub client_order_id: ::core::option::Option<::prost::alloc::string::String>,
-    /// Used in MARKET orders only. Relative Stop Loss that can be specified instead of the absolute as one. Specified in 1/100000 of unit of a price. For BUY stopLoss = entryPrice - relativeStopLoss, for SELL stopLoss = entryPrice + relativeStopLoss.
+    /// Relative Stop Loss that can be specified instead of the absolute as one. Specified in 1/100000 of unit of a price. For BUY stopLoss = entryPrice - relativeStopLoss, for SELL stopLoss = entryPrice + relativeStopLoss.
     #[prost(int64, optional, tag = "19")]
     pub relative_stop_loss: ::core::option::Option<i64>,
-    /// Used in MARKET orders only. Relative Take Profit that can be specified instead of the absolute one. Specified in 1/100000 of unit of a price. For BUY takeProfit = entryPrice + relativeTakeProfit, for SELL takeProfit = entryPrice - relativeTakeProfit.
+    /// Relative Take Profit that can be specified instead of the absolute one. Specified in 1/100000 of unit of a price. For BUY takeProfit = entryPrice + relativeTakeProfit, for SELL takeProfit = entryPrice - relativeTakeProfit.
     #[prost(int64, optional, tag = "20")]
     pub relative_take_profit: ::core::option::Option<i64>,
     /// If TRUE then stopLoss is guaranteed. Available for the French Risk or the Guaranteed Stop Loss Accounts.
@@ -1082,7 +1090,7 @@ pub struct ProtoOaNewOrderReq {
     /// If TRUE then the Stop Loss is Trailing.
     #[prost(bool, optional, tag = "22")]
     pub trailing_stop_loss: ::core::option::Option<bool>,
-    /// Trigger method for the STOP or the STOP_LIMIT pending order. The default value is ProtoOAOrderTriggerMethod.TRADE.
+    /// Trigger method for the STOP or the STOP_LIMIT pending order.
     #[prost(
         enumeration = "ProtoOaOrderTriggerMethod",
         optional,
@@ -1113,7 +1121,7 @@ pub struct ProtoOaExecutionEvent {
     /// Reference to the position linked with the execution
     #[prost(message, optional, tag = "4")]
     pub position: ::core::option::Option<ProtoOaPosition>,
-    /// Reference to the initial order.
+    /// Reference to the initial order. This field will not appear if `executionType = 9, 10, 12`.
     #[prost(message, optional, tag = "5")]
     pub order: ::core::option::Option<ProtoOaOrder>,
     /// Reference to the deal (execution).
@@ -1178,7 +1186,7 @@ pub struct ProtoOaAmendOrderReq {
     /// The Stop Price, can be specified for the STOP and the STOP_LIMIT orders.
     #[prost(double, optional, tag = "6")]
     pub stop_price: ::core::option::Option<f64>,
-    /// The exact Order expiration time. Should be set for the Good Till Date orders.
+    /// The Unix timestamp in milliseconds of Order expiration time. Should be set for the Good Till Date orders.
     #[prost(int64, optional, tag = "7")]
     pub expiration_timestamp: ::core::option::Option<i64>,
     /// The absolute Stop Loss price (e.g. 1.23456). Not supported for the MARKET orders.
@@ -1295,7 +1303,7 @@ pub struct ProtoOaTrailingSlChangedEvent {
     /// New value of the Stop Loss price.
     #[prost(double, required, tag = "5")]
     pub stop_price: f64,
-    /// The exact UTC time when the Stop Loss was updated.
+    /// The Unix timestamp in milliseconds when the Stop Loss was updated.
     #[prost(int64, required, tag = "6")]
     pub utc_last_update_timestamp: i64,
 }
@@ -1676,10 +1684,10 @@ pub struct ProtoOaOrderListReq {
     /// Unique identifier of the trader's account. Used to match responses to trader's accounts.
     #[prost(int64, required, tag = "2")]
     pub ctid_trader_account_id: i64,
-    /// The UNIX time from which the search starts >=0 (1-1-1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
+    /// The Unix time from which the search starts >=0 (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
     #[prost(int64, required, tag = "3")]
     pub from_timestamp: i64,
-    /// The UNIX time where to stop searching <= 2147483646000 (19-1-2038).
+    /// The Unix time where to stop searching <= 2147483646000 (19th Jan 2038).
     #[prost(int64, required, tag = "4")]
     pub to_timestamp: i64,
 }
@@ -1784,10 +1792,10 @@ pub struct ProtoOaCashFlowHistoryListReq {
     /// Unique identifier of the trading account. Used to match responses to trading accounts.
     #[prost(int64, required, tag = "2")]
     pub ctid_trader_account_id: i64,
-    /// The UNIX time from which the search starts >=0 (1-1-1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
+    /// The Unix time from which the search starts >=0 (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
     #[prost(int64, required, tag = "3")]
     pub from_timestamp: i64,
-    /// The UNIX time where to stop searching <= 2147483646000 (19-1-2038).
+    /// The Unix time where to stop searching <= 2147483646000 (19th Jan 2038).
     #[prost(int64, required, tag = "4")]
     pub to_timestamp: i64,
 }
@@ -1945,7 +1953,7 @@ pub struct ProtoOaSpotEvent {
     /// Last session close. Specified in 1/100_000 of unit of a price.
     #[prost(uint64, optional, tag = "7")]
     pub session_close: ::core::option::Option<u64>,
-    /// The UNIX timestamp for spot.
+    /// The Unix timestamp for spot.
     #[prost(int64, optional, tag = "8")]
     pub timestamp: ::core::option::Option<i64>,
 }
@@ -2063,7 +2071,7 @@ pub struct ProtoOaGetTrendbarsRes {
         default = "ProtoOaGetTrendbarsRes"
     )]
     pub payload_type: ::core::option::Option<i32>,
-    /// Unique identifier of the trading account. Used to match responses to trading accounts.
+    /// Unique identifier of the trader's account. Used to match responses to trader's accounts.
     #[prost(int64, required, tag = "2")]
     pub ctid_trader_account_id: i64,
     /// Specifies period of trend bar series (e.g. M1, M10, etc.).
@@ -2099,10 +2107,10 @@ pub struct ProtoOaGetTickDataReq {
     /// Bid/Ask (1/2).
     #[prost(enumeration = "ProtoOaQuoteType", required, tag = "4")]
     pub r#type: i32,
-    /// The exact time of starting the search in milliseconds. Must be bigger of equal to zero (1-1-1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
+    /// The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
     #[prost(int64, required, tag = "5")]
     pub from_timestamp: i64,
-    /// The exact time of finishing the search in milliseconds <= 2147483646000 (19-1-2038).
+    /// The Unix time in milliseconds of finishing the search. <= 2147483646000 (19th Jan 2038).
     #[prost(int64, required, tag = "6")]
     pub to_timestamp: i64,
 }
@@ -2502,7 +2510,7 @@ pub struct ProtoOaHoliday {
     /// Timezone used for holiday.
     #[prost(string, required, tag = "4")]
     pub schedule_time_zone: ::prost::alloc::string::String,
-    /// Amount of days from 01-01-1970, multiply it by 86400000 to get unix timestamp.
+    /// Amount of days from 1st Jan 1970, multiply it by 86400000 to get Unix time in milliseconds.
     #[prost(int64, required, tag = "5")]
     pub holiday_date: i64,
     /// If TRUE, then the holiday happens each year.
@@ -2565,10 +2573,10 @@ pub struct ProtoOaDealListByPositionIdReq {
     /// The unique ID of the position.
     #[prost(int64, required, tag = "3")]
     pub position_id: i64,
-    /// The exact time of starting the search in milliseconds. Must be bigger of equal to zero (1-1-1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
+    /// The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
     #[prost(int64, required, tag = "4")]
     pub from_timestamp: i64,
-    /// The exact time of finishing the search in milliseconds <= 2147483646000 (19-1-2038).
+    /// The Unix time in milliseconds of finishing the search. <= 2147483646000 (19th Jan 2038).
     #[prost(int64, required, tag = "5")]
     pub to_timestamp: i64,
 }
@@ -2649,10 +2657,10 @@ pub struct ProtoOaOrderListByPositionIdReq {
     /// The unique ID of the Position.
     #[prost(int64, required, tag = "3")]
     pub position_id: i64,
-    /// The UNIX time from which the search starts >=0 (1-1-1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week). Search by utcLastUpdateTimestamp of the Order.
+    /// The Unix time from which the search starts >=0 (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week). Search by utcLastUpdateTimestamp of the Order.
     #[prost(int64, required, tag = "4")]
     pub from_timestamp: i64,
-    /// The UNIX time where to stop searching <= 2147483646000 (19-1-2038).  Search by utcLastUpdateTimestamp of the Order.
+    /// The Unix time where to stop searching <= 2147483646000 (19th Jan 2038). Search by utcLastUpdateTimestamp of the Order.
     #[prost(int64, required, tag = "5")]
     pub to_timestamp: i64,
 }
@@ -2716,6 +2724,7 @@ pub struct ProtoOaDealOffsetListRes {
     #[prost(message, repeated, tag = "4")]
     pub offsetting: ::prost::alloc::vec::Vec<ProtoOaDealOffset>,
 }
+/// Request for getting trader's positions' unrealized PnLs.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaGetPositionUnrealizedPnLReq {
@@ -2730,7 +2739,7 @@ pub struct ProtoOaGetPositionUnrealizedPnLReq {
     #[prost(int64, required, tag = "2")]
     pub ctid_trader_account_id: i64,
 }
-/// Response for ProtoOAGetPositionUnrealizedPnLReq.
+/// Response to ProtoOAGetPositionUnrealizedPnLReq request.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaGetPositionUnrealizedPnLRes {
@@ -2802,7 +2811,7 @@ pub enum ProtoErrorCode {
     MarketClosed = 9,
     /// Order is blocked (e.g. under execution) and change cannot be applied.
     ConcurrentModification = 10,
-    /// Message is blocked by server.
+    /// Message is blocked by server or rate limit is reached.
     BlockedPayloadType = 11,
 }
 impl ProtoErrorCode {
@@ -3538,8 +3547,12 @@ pub enum ProtoOaErrorCode {
     OaAuthTokenExpired = 1,
     /// When account is not authorized.
     AccountNotAuthorized = 2,
-    /// When client tries to authorize after it was already authorized
+    /// When such account no longer exists.
+    RetNoSuchLogin = 12,
+    /// When client tries to authorize after it was already authorized.
     AlreadyLoggedIn = 14,
+    /// When account is disabled.
+    RetAccountDisabled = 64,
     /// Open API client is not activated or wrong client credentials.
     ChClientAuthFailure = 101,
     /// When a command is sent for not authorized Open API client.
@@ -3632,7 +3645,9 @@ impl ProtoOaErrorCode {
         match self {
             ProtoOaErrorCode::OaAuthTokenExpired => "OA_AUTH_TOKEN_EXPIRED",
             ProtoOaErrorCode::AccountNotAuthorized => "ACCOUNT_NOT_AUTHORIZED",
+            ProtoOaErrorCode::RetNoSuchLogin => "RET_NO_SUCH_LOGIN",
             ProtoOaErrorCode::AlreadyLoggedIn => "ALREADY_LOGGED_IN",
+            ProtoOaErrorCode::RetAccountDisabled => "RET_ACCOUNT_DISABLED",
             ProtoOaErrorCode::ChClientAuthFailure => "CH_CLIENT_AUTH_FAILURE",
             ProtoOaErrorCode::ChClientNotAuthenticated => "CH_CLIENT_NOT_AUTHENTICATED",
             ProtoOaErrorCode::ChClientAlreadyAuthenticated => "CH_CLIENT_ALREADY_AUTHENTICATED",
@@ -3678,7 +3693,9 @@ impl ProtoOaErrorCode {
         match value {
             "OA_AUTH_TOKEN_EXPIRED" => Some(Self::OaAuthTokenExpired),
             "ACCOUNT_NOT_AUTHORIZED" => Some(Self::AccountNotAuthorized),
+            "RET_NO_SUCH_LOGIN" => Some(Self::RetNoSuchLogin),
             "ALREADY_LOGGED_IN" => Some(Self::AlreadyLoggedIn),
+            "RET_ACCOUNT_DISABLED" => Some(Self::RetAccountDisabled),
             "CH_CLIENT_AUTH_FAILURE" => Some(Self::ChClientAuthFailure),
             "CH_CLIENT_NOT_AUTHENTICATED" => Some(Self::ChClientNotAuthenticated),
             "CH_CLIENT_ALREADY_AUTHENTICATED" => Some(Self::ChClientAlreadyAuthenticated),
