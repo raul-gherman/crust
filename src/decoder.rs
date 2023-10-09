@@ -1,24 +1,30 @@
 use crate::ctrader_open_api::*;
 use prost::*;
 use std::net::TcpStream;
+use std::thread;
 // use std::thread::spawn;
-use chrono::{DateTime, Local};
+// use chrono::{DateTime, Local};
 use tungstenite::stream::MaybeTlsStream;
 use tungstenite::Message as message;
 use tungstenite::WebSocket;
 
-pub fn start(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
-    let client_id = "4460_EpyxopCGdxPprbux9hTDaDtaDhfv4T2G0yF1OrnIg7LGYkAXU1".to_string();
-    let client_secret = "C1lpWCK45J9sOTJ0or5b4GBHcxX5Jbt4erLqwOpB3RP8it4Iy0".to_string();
+const ACCESS_TOKEN: &str = "gbAKM7bBXoyiP6I3S-mA2_UwyBD-zklsinmrZaT0w1Y";
+const CLIENT_ID: &str = "4460_EpyxopCGdxPprbux9hTDaDtaDhfv4T2G0yF1OrnIg7LGYkAXU1";
+const CLIENT_SECRET: &str = "C1lpWCK45J9sOTJ0or5b4GBHcxX5Jbt4erLqwOpB3RP8it4Iy0";
 
-    let outgoing_message = ProtoOaApplicationAuthReq {
+//let mut outgoing_messages_queue: Vec<ProtoMessage> = vec![];
+//outgoing_messages_queue.insert(0, outgoing_message);
+//outgoing_messages_queue.pop();
+
+pub fn start(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
+    let outgoing_message: ProtoOaApplicationAuthReq = ProtoOaApplicationAuthReq {
         payload_type: Some(2100),
-        client_id,
-        client_secret,
+        client_id: CLIENT_ID.to_string(),
+        client_secret: CLIENT_SECRET.to_string(),
     };
 
-    match socket.write_message(message::from(encode_proto_message_to_byte_vector(
-        2100,
+    match socket.send(message::from(encode_proto_message_to_byte_vector(
+        outgoing_message.payload_type.unwrap() as u32,
         outgoing_message.encode_to_vec(),
     ))) {
         Ok(()) => {
@@ -30,10 +36,8 @@ pub fn start(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
 }
 
 pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
-    let access_token = "gbAKM7bBXoyiP6I3S-mA2_UwyBD-zklsinmrZaT0w1Y".to_string();
-
     loop {
-        match socket.read_message() {
+        match socket.read() {
             Ok(m) => match ProtoMessage::decode(m.into_data().as_slice()) {
                 Ok(incoming_proto_message) => match incoming_proto_message.payload {
                     Some(x) => match &incoming_proto_message.payload_type {
@@ -49,7 +53,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                 let outgoing_message: ProtoHeartbeatEvent = ProtoHeartbeatEvent {
                                     payload_type: Some(51),
                                 };
-                                match socket.write_message(message::from(
+                                match socket.send(message::from(
                                     encode_proto_message_to_byte_vector(
                                         outgoing_message.payload_type.unwrap() as u32,
                                         outgoing_message.encode_to_vec(),
@@ -72,9 +76,9 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                 println!("{:#?}", &incoming_message);
                                 let outgoing_message = ProtoOaGetAccountListByAccessTokenReq {
                                     payload_type: Some(2149),
-                                    access_token: access_token.clone(),
+                                    access_token: ACCESS_TOKEN.to_string(),
                                 };
-                                match socket.write_message(message::from(
+                                match socket.send(message::from(
                                     encode_proto_message_to_byte_vector(
                                         outgoing_message.payload_type.unwrap() as u32,
                                         outgoing_message.encode_to_vec(),
@@ -95,7 +99,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                     ctid_trader_account_id: incoming_message.ctid_trader_account_id,
                                     return_protection_orders: Some(true),
                                 };
-                                match socket.write_message(message::from(
+                                match socket.send(message::from(
                                     encode_proto_message_to_byte_vector(
                                         outgoing_message.payload_type.unwrap() as u32,
                                         outgoing_message.encode_to_vec(),
@@ -167,7 +171,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                 for _position in &incoming_message.position {
                                     //println!("{:#?}", &position);
                                 }
-                                /*
+
                                 let symbols_to_subscribe = vec![1, 2, 3];
 
                                 let outgoing_message: ProtoOaSubscribeSpotsReq =
@@ -179,7 +183,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         subscribe_to_spot_timestamp: Some(true),
                                     };
 
-                                match socket.write_message(message::from(
+                                match socket.send(message::from(
                                     encode_proto_message_to_byte_vector(
                                         outgoing_message.payload_type.unwrap() as u32,
                                         outgoing_message.encode_to_vec(),
@@ -187,7 +191,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                 )) {
                                     Ok(..) => println!("{:#?}", &outgoing_message),
                                     Err(e) => println!("{:#?}: {:#?}", &outgoing_message, &e),
-                                } */
+                                }
                             }
                             Err(e) => println!("{e:#?}"),
                         },
@@ -286,10 +290,10 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         payload_type: Some(2102),
                                         ctid_trader_account_id: account.ctid_trader_account_id
                                             as i64,
-                                        access_token: access_token.clone(),
+                                        access_token: ACCESS_TOKEN.to_string(),
                                     };
 
-                                    match socket.write_message(message::from(
+                                    match socket.send(message::from(
                                         encode_proto_message_to_byte_vector(
                                             outgoing_message.payload_type.unwrap() as u32,
                                             outgoing_message.encode_to_vec(),
@@ -470,9 +474,10 @@ fn encode_proto_message_to_byte_vector(payoad_type: u32, payload: Vec<u8>) -> Ve
 
 /*
 fn send(payload: Vec<u8>, mut socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
-    match &socket.write_message(message::from(payload)) {
+    match &socket.send(message::from(payload)) {
         Ok(()) => {}
         Err(e) => println!("{:#?}: ", &e),
     }
 }
+
 */
