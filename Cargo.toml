@@ -8,6 +8,8 @@ version = "8.8.0"
 
 [dependencies]
 chrono = "*"
+env_logger = "0.10.0"
+log = "0.4.20"
 prost = "0.12.1"
 tungstenite = {version = "0.20.1", features = ["native-tls"]}
 url = "2.2.2"
