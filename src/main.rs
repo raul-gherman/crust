@@ -1,28 +1,28 @@
 // mod combination;
+mod ctrader_open_api;
 mod decoder;
+mod encoder;
 mod symbol;
 
+extern crate env_logger;
+
 use crate::decoder::*;
-
-mod ctrader_open_api;
-
+use log::info;
+use std::env;
 use tungstenite::connect;
 use url::Url;
 
 fn main() {
-    /*
-       let key: &str = "HOME";
-       match env::var(key) {
-           Ok(val) => println!("{key}: {val:?}"),
-           Err(e) => println!("couldn't interpret {key}: {e}"),
-       }
-    */
+    env_logger::builder()
+        .format_timestamp(Some(env_logger::TimestampPrecision::Micros))
+        .init();
 
-    let server = "wss://demo.ctraderapi.com:5035";
+    let ctrader_endpoint = env::var("CTRADER_ENDPOINT").expect("$CTRADER_ENDPOINT not set");
+    info!("CTRADER_ENDPOINT: {ctrader_endpoint:?}");
 
-    let (mut socket, _response) =
-        connect(Url::parse(&server).unwrap()).expect("Can't connect to {server}");
-    println!("Connected to {server}");
+    let (mut socket, _response) = connect(Url::parse(&ctrader_endpoint).unwrap())
+        .expect("Can't connect to {ctrader_endpoint}");
+    info!("Connected to {ctrader_endpoint}");
 
     start(&mut socket);
 }
