@@ -1,4 +1,7 @@
 use crate::ctrader_open_api::*;
+use crate::encoder::*;
+
+use log::warn;
 use prost::*;
 use std::net::TcpStream;
 use std::time::Duration;
@@ -8,9 +11,9 @@ use tungstenite::Message as message;
 use tungstenite::WebSocket;
 
 extern crate env_logger;
-use log::{debug, error, info, log_enabled, Level};
+use log::{debug, error};
 
-const ACCESS_TOKEN: &str = "gReY4td4JyoDsbHU3YBCe3s4bpLBVCq5vyCxafMUW7Y";
+const ACCESS_TOKEN: &str = "sys-ssIRWEUqaU5jjLQ4kqmoXfaazJfVwHM0ls9kcUg";
 const CLIENT_ID: &str = "4460_EpyxopCGdxPprbux9hTDaDtaDhfv4T2G0yF1OrnIg7LGYkAXU1";
 const CLIENT_SECRET: &str = "C1lpWCK45J9sOTJ0or5b4GBHcxX5Jbt4erLqwOpB3RP8it4Iy0";
 
@@ -43,27 +46,6 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
     let interval = Duration::from_secs(30);
     let mut next_time = Instant::now() + interval;
     loop {
-        match Instant::now() > next_time {
-            true => {
-                let outgoing_message: ProtoHeartbeatEvent = ProtoHeartbeatEvent {
-                    payload_type: Some(51),
-                };
-                match socket.send(message::from(encode_proto_message_to_byte_vector(
-                    outgoing_message.payload_type.unwrap() as u32,
-                    outgoing_message.encode_to_vec(),
-                ))) {
-                    Ok(()) => {
-                        debug!("{:#?}", &outgoing_message);
-                    }
-                    Err(e) => {
-                        error!("sending {:?} :: {:?}", &outgoing_message, &e);
-                    }
-                }
-                next_time += interval;
-            }
-            false => (),
-        }
-
         match socket.read() {
             Ok(incoming_message) => {
                 match ProtoMessage::decode(incoming_message.into_data().as_slice()) {
@@ -714,36 +696,33 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                 error!("{:?}", e);
             }
         }
+        if Instant::now() > next_time {
+            let outgoing_message: ProtoHeartbeatEvent = ProtoHeartbeatEvent {
+                payload_type: Some(51),
+            };
+            match socket.send(message::from(encode_proto_message_to_byte_vector(
+                outgoing_message.payload_type.unwrap() as u32,
+                outgoing_message.encode_to_vec(),
+            ))) {
+                Ok(()) => {
+                    debug!("{:#?}", &outgoing_message);
+                }
+                Err(e) => {
+                    error!("sending {:?} :: {:?}", &outgoing_message, &e);
+                }
+            }
+            next_time += interval;
+        }
     }
-}
-
-pub fn encode_proto_message_to_byte_vector(payoad_type: u32, payload: Vec<u8>) -> Vec<u8> {
-    let message = ProtoMessage {
-        payload_type: payoad_type,
-        payload: Some(payload),
-        client_msg_id: None,
-    };
-
-    message.encode_to_vec()
 }
 
 fn process_spot_event(spot_event: &ProtoOaSpotEvent) {
     match spot_event.symbol_id {
-        1 => {
-            debug!("1 :: {:#?}", spot_event);
-        }
-        2 => {
-            debug!("2 :: {:#?}", spot_event);
-        }
-        3 => {
-            debug!("3 :: {:#?}", spot_event);
+        1 | 2 | 3 => {
+            debug!("{:#?}", spot_event);
         }
         _ => {
-            debug!(
-                "{:#?} something else :: {:#?}",
-                chrono::offset::Local::now(),
-                spot_event
-            );
+            warn!("process_spot_event :: {:#?}", spot_event);
         }
     }
 }
