@@ -3,6 +3,7 @@ use crate::encoder::*;
 
 use log::warn;
 use prost::*;
+use std::env;
 use std::net::TcpStream;
 use std::time::Duration;
 use std::time::Instant;
@@ -13,19 +14,20 @@ use tungstenite::WebSocket;
 extern crate env_logger;
 use log::{debug, error};
 
-const ACCESS_TOKEN: &str = "sys-ssIRWEUqaU5jjLQ4kqmoXfaazJfVwHM0ls9kcUg";
-const CLIENT_ID: &str = "4460_EpyxopCGdxPprbux9hTDaDtaDhfv4T2G0yF1OrnIg7LGYkAXU1";
-const CLIENT_SECRET: &str = "C1lpWCK45J9sOTJ0or5b4GBHcxX5Jbt4erLqwOpB3RP8it4Iy0";
-
-//let mut outgoing_messages_queue: Vec<ProtoMessage> = vec![];
-//outgoing_messages_queue.insert(0, outgoing_message);
-//outgoing_messages_queue.pop();
+/*
+let mut outgoing_messages_queue: Vec<ProtoMessage> = vec![];
+outgoing_messages_queue.insert(0, outgoing_message);
+outgoing_messages_queue.pop();
+*/
 
 pub fn start(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
+    let client_id = env::var("CLIENT_ID").expect("$CLIENT_ID is not set");
+    let client_secret = env::var("CLIENT_SECRET").expect("$CLIENT_SECRET is not set");
+
     let outgoing_message: ProtoOaApplicationAuthReq = ProtoOaApplicationAuthReq {
         payload_type: Some(2100),
-        client_id: CLIENT_ID.to_string(),
-        client_secret: CLIENT_SECRET.to_string(),
+        client_id: client_id.to_string(),
+        client_secret: client_secret.to_string(),
     };
 
     match socket.send(message::from(encode_proto_message_to_byte_vector(
@@ -91,9 +93,11 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                             ) {
                                 Ok(incoming_message) => {
                                     debug!("{:#?}", &incoming_message);
+                                    let access_token =
+                                        env::var("ACCESS_TOKEN").expect("$ACCESS_TOKEN is not set");
                                     let outgoing_message = ProtoOaGetAccountListByAccessTokenReq {
                                         payload_type: Some(2149),
-                                        access_token: ACCESS_TOKEN.to_string(),
+                                        access_token: access_token.to_string(),
                                     };
                                     match socket.send(message::from(
                                         encode_proto_message_to_byte_vector(
@@ -421,6 +425,8 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                 ) {
                                     Ok(incoming_message) => {
                                         debug!("{:#?}", &incoming_message);
+                                        let access_token = env::var("ACCESS_TOKEN")
+                                            .expect("$ACCESS_TOKEN is not set");
 
                                         for account in &incoming_message.ctid_trader_account {
                                             let outgoing_message = ProtoOaAccountAuthReq {
@@ -428,7 +434,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                                 ctid_trader_account_id: account
                                                     .ctid_trader_account_id
                                                     as i64,
-                                                access_token: ACCESS_TOKEN.to_string(),
+                                                access_token: access_token.to_string(),
                                             };
 
                                             match socket.send(message::from(
