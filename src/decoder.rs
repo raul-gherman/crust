@@ -21,8 +21,8 @@ outgoing_messages_queue.pop();
 */
 
 pub fn start(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
-    let client_id = env::var("CLIENT_ID").expect("$CLIENT_ID is not set");
-    let client_secret = env::var("CLIENT_SECRET").expect("$CLIENT_SECRET is not set");
+    let client_id = env::var("CLIENT_ID").expect("$CLIENT_ID not set");
+    let client_secret = env::var("CLIENT_SECRET").expect("$CLIENT_SECRET not set");
 
     let outgoing_message: ProtoOaApplicationAuthReq = ProtoOaApplicationAuthReq {
         payload_type: Some(2100),
@@ -94,7 +94,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                 Ok(incoming_message) => {
                                     debug!("{:#?}", &incoming_message);
                                     let access_token =
-                                        env::var("ACCESS_TOKEN").expect("$ACCESS_TOKEN is not set");
+                                        env::var("ACCESS_TOKEN").expect("$ACCESS_TOKEN not set");
                                     let outgoing_message = ProtoOaGetAccountListByAccessTokenReq {
                                         payload_type: Some(2149),
                                         access_token: access_token.to_string(),
@@ -426,7 +426,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                     Ok(incoming_message) => {
                                         debug!("{:#?}", &incoming_message);
                                         let access_token = env::var("ACCESS_TOKEN")
-                                            .expect("$ACCESS_TOKEN is not set");
+                                            .expect("$ACCESS_TOKEN not set");
 
                                         for account in &incoming_message.ctid_trader_account {
                                             let outgoing_message = ProtoOaAccountAuthReq {

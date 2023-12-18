@@ -13,12 +13,11 @@ use tungstenite::connect;
 use url::Url;
 
 fn main() {
-    std::env::set_var("RUST_LOG", "DEBUG");
     env_logger::builder()
         .format_timestamp(Some(env_logger::TimestampPrecision::Micros))
         .init();
 
-    let ctrader_endpoint = env::var("CTRADER_ENDPOINT").expect("$CTRADER_ENDPOINT is not set");
+    let ctrader_endpoint = env::var("CTRADER_ENDPOINT").expect("$CTRADER_ENDPOINT not set");
     info!("CTRADER_ENDPOINT: {ctrader_endpoint:?}");
 
     let (mut socket, _response) = connect(Url::parse(&ctrader_endpoint).unwrap())
