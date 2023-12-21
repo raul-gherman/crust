@@ -1,7 +1,6 @@
 use crate::ctrader_open_api::*;
 use crate::encoder::*;
 
-use log::warn;
 use prost::*;
 use std::env;
 use std::net::TcpStream;
@@ -245,7 +244,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         debug!("{:#?}", &position);
                                     }
 
-                                    let symbols_to_subscribe = vec![1, 2, 3];
+                                    let symbols_to_subscribe = vec![1, 4, 3];
 
                                     let outgoing_message: ProtoOaSubscribeSpotsReq =
                                         ProtoOaSubscribeSpotsReq {
@@ -308,9 +307,8 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                 incoming_message_payload_type.as_slice(),
                             ) {
                                 Ok(incoming_message) => {
-                                    //debug!("{:#?}", &incoming_message);
-                                    // TODO: process spot event
-                                    process_spot_event(&incoming_message);
+                                    //process_spot_event(&incoming_message);
+                                    debug!("{:#?}", &incoming_message);
                                 }
                                 Err(e) => {
                                     error!("{:?}", e);
@@ -722,6 +720,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
     }
 }
 
+/*
 fn process_spot_event(spot_event: &ProtoOaSpotEvent) {
     match spot_event.symbol_id {
         1 | 2 | 3 => {
@@ -732,3 +731,4 @@ fn process_spot_event(spot_event: &ProtoOaSpotEvent) {
         }
     }
 }
+ */
