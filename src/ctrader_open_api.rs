@@ -366,7 +366,7 @@ pub struct ProtoOaTrader {
     /// The Unix timestamp in milliseconds of the account registration. Should be used as minimal date in historical data requests.
     #[prost(int64, optional, tag = "17")]
     pub registration_timestamp: ::core::option::Option<i64>,
-    /// If TRUE then account is compliant to use specific margin calculation strategy.
+    /// If TRUE then account is compliant to use specific margin calculation strategy. Such accounts are require to have guaranteed stop loss on all positions.
     #[prost(bool, optional, tag = "18")]
     pub is_limited_risk: ::core::option::Option<bool>,
     /// Special strategy used in margin calculations for this account (if account isLimitedRisk).
@@ -383,6 +383,14 @@ pub struct ProtoOaTrader {
     /// If TRUE - Position is fully closed on Stop Out, if FALSE - smart (partial closing) Stop Out is applied, if unspecified  - Stop Out format is determined by Broker.
     #[prost(bool, optional, tag = "21")]
     pub fair_stop_out: ::core::option::Option<bool>,
+    /// The Stop Out strategy that is used for this Trader. The Trader can change the value in the cTrader UI if this option is not disabled by the Broker
+    #[prost(
+        enumeration = "ProtoOaStopOutStrategy",
+        optional,
+        tag = "22",
+        default = "MostMarginUsedFirst"
+    )]
+    pub stop_out_strategy: ::core::option::Option<i32>,
 }
 /// Position/order trading details entity
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -815,6 +823,9 @@ pub struct ProtoOaCtidTraderAccount {
     /// The Unix time in milliseconds of the last ProtoOADepositWithdraw happened to this account.
     #[prost(int64, optional, tag = "5")]
     pub last_balance_update_timestamp: ::core::option::Option<i64>,
+    /// The name of the broker to which the account belongs to. Shortened to be displayed in the UI.
+    #[prost(string, optional, tag = "6")]
+    pub broker_title_short: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// Asset class entity
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1084,7 +1095,7 @@ pub struct ProtoOaNewOrderReq {
     /// Relative Take Profit that can be specified instead of the absolute one. Specified in 1/100000 of unit of a price. For BUY takeProfit = entryPrice + relativeTakeProfit, for SELL takeProfit = entryPrice - relativeTakeProfit.
     #[prost(int64, optional, tag = "20")]
     pub relative_take_profit: ::core::option::Option<i64>,
-    /// If TRUE then stopLoss is guaranteed. Available for the French Risk or the Guaranteed Stop Loss Accounts.
+    /// If TRUE then stopLoss is guaranteed. Required to be set to TRUE for the Limited Risk accounts (ProtoOATrader.isLimitedRisk=true).
     #[prost(bool, optional, tag = "21")]
     pub guaranteed_stop_loss: ::core::option::Option<bool>,
     /// If TRUE then the Stop Loss is Trailing.
@@ -1121,7 +1132,7 @@ pub struct ProtoOaExecutionEvent {
     /// Reference to the position linked with the execution
     #[prost(message, optional, tag = "4")]
     pub position: ::core::option::Option<ProtoOaPosition>,
-    /// Reference to the initial order. This field will not appear if `executionType = 9, 10, 12`.
+    /// Reference to the initial order.
     #[prost(message, optional, tag = "5")]
     pub order: ::core::option::Option<ProtoOaOrder>,
     /// Reference to the deal (execution).
@@ -1639,12 +1650,12 @@ pub struct ProtoOaDealListReq {
     /// Unique identifier of the trading account. Used to match responses to trading accounts.
     #[prost(int64, required, tag = "2")]
     pub ctid_trader_account_id: i64,
-    /// The UNIX time from which the search starts >=0 (1-1-1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
-    #[prost(int64, required, tag = "3")]
-    pub from_timestamp: i64,
+    /// The UNIX time from which the search starts >=0 (1-1-1970).
+    #[prost(int64, optional, tag = "3")]
+    pub from_timestamp: ::core::option::Option<i64>,
     /// The UNIX time where to stop searching <= 2147483646000 (19-1-2038).
-    #[prost(int64, required, tag = "4")]
-    pub to_timestamp: i64,
+    #[prost(int64, optional, tag = "4")]
+    pub to_timestamp: ::core::option::Option<i64>,
     /// The maximum number of the deals to return.
     #[prost(int32, optional, tag = "5")]
     pub max_rows: ::core::option::Option<i32>,
@@ -1684,12 +1695,12 @@ pub struct ProtoOaOrderListReq {
     /// Unique identifier of the trader's account. Used to match responses to trader's accounts.
     #[prost(int64, required, tag = "2")]
     pub ctid_trader_account_id: i64,
-    /// The Unix time from which the search starts >=0 (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
-    #[prost(int64, required, tag = "3")]
-    pub from_timestamp: i64,
+    /// The Unix time from which the search starts >=0 (1st Jan 1970).
+    #[prost(int64, optional, tag = "3")]
+    pub from_timestamp: ::core::option::Option<i64>,
     /// The Unix time where to stop searching <= 2147483646000 (19th Jan 2038).
-    #[prost(int64, required, tag = "4")]
-    pub to_timestamp: i64,
+    #[prost(int64, optional, tag = "4")]
+    pub to_timestamp: ::core::option::Option<i64>,
 }
 /// The response to the ProtoOAOrderListReq request.
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1712,7 +1723,8 @@ pub struct ProtoOaOrderListRes {
     #[prost(bool, required, tag = "4")]
     pub has_more: bool,
 }
-/// Request for getting the margin estimate. Can be used before sending a new order request.
+/// Request for getting the margin estimate according to leverage profiles. Can be used before sending a new order request.
+/// This doesn't consider ACCORDING_TO_GSL margin calculation type, as this calculation is trivial: usedMargin = (VWAP price of the position - GSL price) * volume * Quote2Deposit.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaExpectedMarginReq {
@@ -1874,7 +1886,7 @@ pub struct ProtoOaSubscribeSpotsReq {
     #[prost(bool, optional, tag = "4")]
     pub subscribe_to_spot_timestamp: ::core::option::Option<bool>,
 }
-/// Response to the ProtoOASubscribeSpotsReq request.
+/// Response to the ProtoOASubscribeSpotsReq request. Reflects that your request to subscribe for symbol has been added to queue. You'll receive technical ProtoOASpotEvent with current price shortly after this response.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaSubscribeSpotsRes {
@@ -1889,7 +1901,7 @@ pub struct ProtoOaSubscribeSpotsRes {
     #[prost(int64, required, tag = "2")]
     pub ctid_trader_account_id: i64,
 }
-/// Request for unsubscribing from the spot events of the specified symbol.
+/// Request for unsubscribing from the spot events of the specified symbol. Request to stop receiving ProtoOASpotEvents related to particular symbols. Unsubscription is useful to minimize traffic, especially during high volatility events.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaUnsubscribeSpotsReq {
@@ -1907,7 +1919,7 @@ pub struct ProtoOaUnsubscribeSpotsReq {
     #[prost(int64, repeated, packed = "false", tag = "3")]
     pub symbol_id: ::prost::alloc::vec::Vec<i64>,
 }
-/// Response to the ProtoOASubscribeSpotsRes request.
+/// Response to the ProtoOASubscribeSpotsRes request. Reflects that your request to unsubscribe has been added to queue and will be completed shortly. You may still occasionally receive ProtoOASpotEvents until request processing is complete.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaUnsubscribeSpotsRes {
@@ -2044,12 +2056,9 @@ pub struct ProtoOaGetTrendbarsReq {
     /// Unique identifier of the trading account. Used to match responses to trading accounts.
     #[prost(int64, required, tag = "2")]
     pub ctid_trader_account_id: i64,
-    /// The exact time of starting the search in milliseconds. Must be bigger or equal to zero (1-1-1970). Validation: toTimestamp - fromTimestamp <= X, where X depends on series period: M1, M2, M3, M4, M5: 3024000000 (5 weeks); M10, M15, M30, H1: 21168000000 (35 weeks), H4, H12, D1: 31622400000 (1 year); W1, MN1: 158112000000 (5 years).
-    #[prost(int64, required, tag = "3")]
-    pub from_timestamp: i64,
-    /// The exact time of finishing the search in milliseconds. Smaller or equal to 2147483646000 (19-1-2038).
-    #[prost(int64, required, tag = "4")]
-    pub to_timestamp: i64,
+    /// The exact time of starting the search in milliseconds. Must be bigger or equal to zero (1-1-1970).
+    #[prost(int64, optional, tag = "3")]
+    pub from_timestamp: ::core::option::Option<i64>,
     /// Specifies period of trend bar series (e.g. M1, M10, etc.).
     #[prost(enumeration = "ProtoOaTrendbarPeriod", required, tag = "5")]
     pub period: i32,
@@ -2077,9 +2086,10 @@ pub struct ProtoOaGetTrendbarsRes {
     /// Specifies period of trend bar series (e.g. M1, M10, etc.).
     #[prost(enumeration = "ProtoOaTrendbarPeriod", required, tag = "3")]
     pub period: i32,
-    /// Equals to toTimestamp from the request.
-    #[prost(int64, required, tag = "4")]
-    pub timestamp: i64,
+    /// Simply don't use this field, as your original request already contains toTimestamp.
+    #[deprecated]
+    #[prost(int64, optional, tag = "4")]
+    pub timestamp: ::core::option::Option<i64>,
     /// The list of trend bars.
     #[prost(message, repeated, tag = "5")]
     pub trendbar: ::prost::alloc::vec::Vec<ProtoOaTrendbar>,
@@ -2107,12 +2117,12 @@ pub struct ProtoOaGetTickDataReq {
     /// Bid/Ask (1/2).
     #[prost(enumeration = "ProtoOaQuoteType", required, tag = "4")]
     pub r#type: i32,
-    /// The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
-    #[prost(int64, required, tag = "5")]
-    pub from_timestamp: i64,
+    /// The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970).
+    #[prost(int64, optional, tag = "5")]
+    pub from_timestamp: ::core::option::Option<i64>,
     /// The Unix time in milliseconds of finishing the search. <= 2147483646000 (19th Jan 2038).
-    #[prost(int64, required, tag = "6")]
-    pub to_timestamp: i64,
+    #[prost(int64, optional, tag = "6")]
+    pub to_timestamp: ::core::option::Option<i64>,
 }
 /// Response to the ProtoOAGetTickDataReq request.
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -2304,7 +2314,7 @@ pub struct ProtoOaAccountLogoutReq {
     #[prost(int64, required, tag = "2")]
     pub ctid_trader_account_id: i64,
 }
-/// Response to the ProtoOATraderLogoutReq request.
+/// Response to the ProtoOATraderLogoutReq request. Actual logout of trading account will be completed on ProtoOAAccountDisconnectEvent.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProtoOaAccountLogoutRes {
@@ -2573,12 +2583,12 @@ pub struct ProtoOaDealListByPositionIdReq {
     /// The unique ID of the position.
     #[prost(int64, required, tag = "3")]
     pub position_id: i64,
-    /// The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
-    #[prost(int64, required, tag = "4")]
-    pub from_timestamp: i64,
+    /// The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970).
+    #[prost(int64, optional, tag = "4")]
+    pub from_timestamp: ::core::option::Option<i64>,
     /// The Unix time in milliseconds of finishing the search. <= 2147483646000 (19th Jan 2038).
-    #[prost(int64, required, tag = "5")]
-    pub to_timestamp: i64,
+    #[prost(int64, optional, tag = "5")]
+    pub to_timestamp: ::core::option::Option<i64>,
 }
 /// Response to the ProtoOADealListByPositionIdReq request.
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -2657,12 +2667,12 @@ pub struct ProtoOaOrderListByPositionIdReq {
     /// The unique ID of the Position.
     #[prost(int64, required, tag = "3")]
     pub position_id: i64,
-    /// The Unix time from which the search starts >=0 (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week). Search by utcLastUpdateTimestamp of the Order.
-    #[prost(int64, required, tag = "4")]
-    pub from_timestamp: i64,
+    /// The Unix time from which the search starts >=0 (1st Jan 1970). Search by utcLastUpdateTimestamp of the Order.
+    #[prost(int64, optional, tag = "4")]
+    pub from_timestamp: ::core::option::Option<i64>,
     /// The Unix time where to stop searching <= 2147483646000 (19th Jan 2038). Search by utcLastUpdateTimestamp of the Order.
-    #[prost(int64, required, tag = "5")]
-    pub to_timestamp: i64,
+    #[prost(int64, optional, tag = "5")]
+    pub to_timestamp: ::core::option::Option<i64>,
 }
 /// Response to ProtoOAOrderListByPositionIdReq request.
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -3383,6 +3393,8 @@ pub enum ProtoOaSwapCalculationType {
     Pips = 0,
     /// Specifies type of SWAP computation as PERCENTAGE (1, annual, in percent)
     Percentage = 1,
+    /// Specifies type of SWAP computation as POINTS (2)
+    Points = 2,
 }
 impl ProtoOaSwapCalculationType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -3393,6 +3405,7 @@ impl ProtoOaSwapCalculationType {
         match self {
             ProtoOaSwapCalculationType::Pips => "PIPS",
             ProtoOaSwapCalculationType::Percentage => "PERCENTAGE",
+            ProtoOaSwapCalculationType::Points => "POINTS",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -3400,6 +3413,7 @@ impl ProtoOaSwapCalculationType {
         match value {
             "PIPS" => Some(Self::Pips),
             "PERCENTAGE" => Some(Self::Percentage),
+            "POINTS" => Some(Self::Points),
             _ => None,
         }
     }
@@ -4462,6 +4476,35 @@ impl ProtoOaChangeBonusType {
         match value {
             "BONUS_DEPOSIT" => Some(Self::BonusDeposit),
             "BONUS_WITHDRAW" => Some(Self::BonusWithdraw),
+            _ => None,
+        }
+    }
+}
+/// The strategy for choosing which Position to close during a Stop Out
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ProtoOaStopOutStrategy {
+    /// A Stop Out strategy that closes a Position with the largest Used Margin
+    MostMarginUsedFirst = 0,
+    /// A Stop Out strategy that closes a Position with the least PnL
+    MostLosingFirst = 1,
+}
+impl ProtoOaStopOutStrategy {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            ProtoOaStopOutStrategy::MostMarginUsedFirst => "MOST_MARGIN_USED_FIRST",
+            ProtoOaStopOutStrategy::MostLosingFirst => "MOST_LOSING_FIRST",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "MOST_MARGIN_USED_FIRST" => Some(Self::MostMarginUsedFirst),
+            "MOST_LOSING_FIRST" => Some(Self::MostLosingFirst),
             _ => None,
         }
     }
