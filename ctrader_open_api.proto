@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// cTrader OpenAPI 8.8
+/// cTrader OpenAPI 8.9
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 syntax="proto2";
@@ -172,6 +172,7 @@ enum ProtoOASwapCalculationType
 {
     PIPS       = 0; // Specifies type of SWAP computation as PIPS (0)
     PERCENTAGE = 1; // Specifies type of SWAP computation as PERCENTAGE (1, annual, in percent)
+    POINTS     = 2; // Specifies type of SWAP computation as POINTS (2)
 }
 
 // Enum for specifying access right for a trader
@@ -432,6 +433,13 @@ enum ProtoOAChangeBonusType
     BONUS_WITHDRAW = 1;
 }
 
+//The strategy for choosing which Position to close during a Stop Out
+enum ProtoOAStopOutStrategy
+{
+    MOST_MARGIN_USED_FIRST = 0; // A Stop Out strategy that closes a Position with the largest Used Margin
+    MOST_LOSING_FIRST      = 1; // A Stop Out strategy that closes a Position with the least PnL
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// MESSAGES
@@ -483,7 +491,7 @@ message ProtoOASymbol
     required int32                      digits                       = 2;  // Number of price digits to be displayed.
     required int32                      pipPosition                  = 3;  // Pip position on digits.
     optional bool                       enableShortSelling           = 4;  // If TRUE then the short selling with the symbol is enabled.
-    optional bool                       guaranteedStopLoss           = 5;  // If TRUE then setting of guaranteedStopLoss is allowed for the symbol.
+    optional bool                       guaranteedStopLoss           = 5;  // If TRUE then setting of guaranteedStopLoss is available for limited risk accounts.
     optional ProtoOADayOfWeek           swapRollover3Days            = 6   [default = MONDAY]; // Day of the week when 3x rollover is charged.
     optional double                     swapLong                     = 7;  // SWAP charge for long positions.
     optional double                     swapShort                    = 8;  // SWAP charge for short positions.
@@ -571,10 +579,11 @@ message ProtoOATrader
     optional ProtoOAAccountType                          accountType                          = 15  [default = HEDGED]; // Account type: HEDGED, NETTED, etc.
     optional string                                      brokerName                           = 16; // Some whitelabel assigned to trader by broker at the moment of account creation.
     optional int64                                       registrationTimestamp                = 17; // The Unix timestamp in milliseconds of the account registration. Should be used as minimal date in historical data requests.
-    optional bool                                        isLimitedRisk                        = 18; // If TRUE then account is compliant to use specific margin calculation strategy.
+    optional bool                                        isLimitedRisk                        = 18; // If TRUE then account is compliant to use specific margin calculation strategy. Such accounts are require to have guaranteed stop loss on all positions.
     optional ProtoOALimitedRiskMarginCalculationStrategy limitedRiskMarginCalculationStrategy = 19  [default = ACCORDING_TO_LEVERAGE]; // Special strategy used in margin calculations for this account (if account isLimitedRisk).
     optional uint32                                      moneyDigits                          = 20; // Specifies the exponent of the monetary values. E.g. moneyDigits = 8 must be interpret as business value multiplied by 10^8, then real balance would be 10053099944 / 10^8 = 100.53099944. Affects balance, managerBonus, ibBonus, nonWithdrawableBonus.
     optional bool                                        fairStopOut                          = 21; // If TRUE - Position is fully closed on Stop Out, if FALSE - smart (partial closing) Stop Out is applied, if unspecified  - Stop Out format is determined by Broker.
+    optional ProtoOAStopOutStrategy                      stopOutStrategy                      = 22 [default = MOST_MARGIN_USED_FIRST]; //The Stop Out strategy that is used for this Trader. The Trader can change the value in the cTrader UI if this option is not disabled by the Broker
 }
 
 // Position/order trading details entity
@@ -755,6 +764,7 @@ message ProtoOACtidTraderAccount
     optional int64  traderLogin                = 3; // TraderLogin for a specific account. Value is displayed on Client App UI
     optional int64  lastClosingDealTimestamp   = 4; // The Unix time in milliseconds of the last ProtoOAClosePositionDetail happened to this account.
     optional int64  lastBalanceUpdateTimestamp = 5; // The Unix time in milliseconds of the last ProtoOADepositWithdraw happened to this account.
+    optional string brokerTitleShort           = 6; // The name of the broker to which the account belongs to. Shortened to be displayed in the UI.
 }
 
 // Asset class entity
@@ -876,7 +886,7 @@ message ProtoOANewOrderReq
     optional string                    clientOrderId       = 18; // Optional user-specific clientOrderId (similar to FIX ClOrderID). MaxLength = 50.
     optional int64                     relativeStopLoss    = 19; // Relative Stop Loss that can be specified instead of the absolute as one. Specified in 1/100000 of unit of a price. For BUY stopLoss = entryPrice - relativeStopLoss, for SELL stopLoss = entryPrice + relativeStopLoss.
     optional int64                     relativeTakeProfit  = 20; // Relative Take Profit that can be specified instead of the absolute one. Specified in 1/100000 of unit of a price. For BUY takeProfit = entryPrice + relativeTakeProfit, for SELL takeProfit = entryPrice - relativeTakeProfit.
-    optional bool                      guaranteedStopLoss  = 21; // If TRUE then stopLoss is guaranteed. Available for the French Risk or the Guaranteed Stop Loss Accounts.
+    optional bool                      guaranteedStopLoss  = 21; // If TRUE then stopLoss is guaranteed. Required to be set to TRUE for the Limited Risk accounts (ProtoOATrader.isLimitedRisk=true).
     optional bool                      trailingStopLoss    = 22; // If TRUE then the Stop Loss is Trailing.
     optional ProtoOAOrderTriggerMethod stopTriggerMethod   = 23  [default = TRADE]; // Trigger method for the STOP or the STOP_LIMIT pending order.
 }
@@ -890,7 +900,7 @@ message ProtoOAExecutionEvent
     required int64                       ctidTraderAccountId  = 2;  // Unique identifier of the trading account. Used to match responses to trading accounts.
     required ProtoOAExecutionType        executionType        = 3;  // Type of the order operation. For example: ACCEPTED, FILLED, etc.
     optional ProtoOAPosition             position             = 4;  // Reference to the position linked with the execution
-    optional ProtoOAOrder                order                = 5;  // Reference to the initial order. This field will not appear if `executionType = 9, 10, 12`.
+    optional ProtoOAOrder                order                = 5;  // Reference to the initial order.
     optional ProtoOADeal                 deal                 = 6;  // Reference to the deal (execution).
     optional ProtoOABonusDepositWithdraw bonusDepositWithdraw = 7;  // Reference to the Bonus Deposit or Withdrawal operation.
     optional ProtoOADepositWithdraw      depositWithdraw      = 8;  // Reference to the Deposit or Withdrawal operation.
@@ -1108,8 +1118,8 @@ message ProtoOADealListReq
 {
     optional ProtoOAPayloadType payloadType         = 1  [default = PROTO_OA_DEAL_LIST_REQ];
     required int64              ctidTraderAccountId = 2; // Unique identifier of the trading account. Used to match responses to trading accounts.
-    required int64              fromTimestamp       = 3; // The UNIX time from which the search starts >=0 (1-1-1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
-    required int64              toTimestamp         = 4; // The UNIX time where to stop searching <= 2147483646000 (19-1-2038).
+    optional int64              fromTimestamp       = 3; // The UNIX time from which the search starts >=0 (1-1-1970).
+    optional int64              toTimestamp         = 4; // The UNIX time where to stop searching <= 2147483646000 (19-1-2038).
     optional int32              maxRows             = 5; // The maximum number of the deals to return.
 }
 
@@ -1127,8 +1137,8 @@ message ProtoOAOrderListReq
 {
     optional ProtoOAPayloadType payloadType         = 1 [default = PROTO_OA_ORDER_LIST_REQ];
     required int64              ctidTraderAccountId = 2; // Unique identifier of the trader's account. Used to match responses to trader's accounts.
-    required int64              fromTimestamp       = 3; // The Unix time from which the search starts >=0 (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
-    required int64              toTimestamp         = 4; // The Unix time where to stop searching <= 2147483646000 (19th Jan 2038).
+    optional int64              fromTimestamp       = 3; // The Unix time from which the search starts >=0 (1st Jan 1970).
+    optional int64              toTimestamp         = 4; // The Unix time where to stop searching <= 2147483646000 (19th Jan 2038).
 }
 
 // The response to the ProtoOAOrderListReq request.
@@ -1140,7 +1150,8 @@ message ProtoOAOrderListRes
     required bool               hasMore             = 4; // If TRUE then the number of records by filter is larger than chunkSize, the response contains the number of records that is equal to chunkSize.
 }
 
-// Request for getting the margin estimate. Can be used before sending a new order request.
+// Request for getting the margin estimate according to leverage profiles. Can be used before sending a new order request.
+// This doesn't consider ACCORDING_TO_GSL margin calculation type, as this calculation is trivial: usedMargin = (VWAP price of the position - GSL price) * volume * Quote2Deposit.
 message ProtoOAExpectedMarginReq
 {
     optional ProtoOAPayloadType payloadType         = 1  [default = PROTO_OA_EXPECTED_MARGIN_REQ];
@@ -1212,14 +1223,14 @@ message ProtoOASubscribeSpotsReq
     optional bool               subscribeToSpotTimestamp = 4; // If TRUE you will also receive the timestamp in ProtoOASpotEvent.
 }
 
-// Response to the ProtoOASubscribeSpotsReq request.
+// Response to the ProtoOASubscribeSpotsReq request. Reflects that your request to subscribe for symbol has been added to queue. You'll receive technical ProtoOASpotEvent with current price shortly after this response.
 message ProtoOASubscribeSpotsRes
 {
     optional ProtoOAPayloadType payloadType         = 1  [default = PROTO_OA_SUBSCRIBE_SPOTS_RES];
     required int64              ctidTraderAccountId = 2; // Unique identifier of the trading account. Used to match responses to trading accounts.
 }
 
-// Request for unsubscribing from the spot events of the specified symbol.
+// Request for unsubscribing from the spot events of the specified symbol. Request to stop receiving ProtoOASpotEvents related to particular symbols. Unsubscription is useful to minimize traffic, especially during high volatility events.
 message ProtoOAUnsubscribeSpotsReq
 {
     optional ProtoOAPayloadType payloadType         = 1  [default = PROTO_OA_UNSUBSCRIBE_SPOTS_REQ];
@@ -1227,7 +1238,7 @@ message ProtoOAUnsubscribeSpotsReq
     repeated int64              symbolId            = 3; // Unique identifier of the Symbol in cTrader platform.
 }
 
-// Response to the ProtoOASubscribeSpotsRes request.
+// Response to the ProtoOASubscribeSpotsRes request. Reflects that your request to unsubscribe has been added to queue and will be completed shortly. You may still occasionally receive ProtoOASpotEvents until request processing is complete.
 message ProtoOAUnsubscribeSpotsRes
 {
     optional ProtoOAPayloadType payloadType         = 1  [default = PROTO_OA_UNSUBSCRIBE_SPOTS_RES];
@@ -1287,8 +1298,7 @@ message ProtoOAGetTrendbarsReq
 {
     optional ProtoOAPayloadType    payloadType         = 1  [default = PROTO_OA_GET_TRENDBARS_REQ];
     required int64                 ctidTraderAccountId = 2; // Unique identifier of the trading account. Used to match responses to trading accounts.
-    required int64                 fromTimestamp       = 3; // The exact time of starting the search in milliseconds. Must be bigger or equal to zero (1-1-1970). Validation: toTimestamp - fromTimestamp <= X, where X depends on series period: M1, M2, M3, M4, M5: 3024000000 (5 weeks); M10, M15, M30, H1: 21168000000 (35 weeks), H4, H12, D1: 31622400000 (1 year); W1, MN1: 158112000000 (5 years).
-    required int64                 toTimestamp         = 4; // The exact time of finishing the search in milliseconds. Smaller or equal to 2147483646000 (19-1-2038).
+    optional int64                 fromTimestamp       = 3; // The exact time of starting the search in milliseconds. Must be bigger or equal to zero (1-1-1970).
     required ProtoOATrendbarPeriod period              = 5; // Specifies period of trend bar series (e.g. M1, M10, etc.).
     required int64                 symbolId            = 6; // Unique identifier of the Symbol in cTrader platform.
     optional uint32                count               = 7; // Limit number of trend bars in response back from toTimestamp.
@@ -1299,7 +1309,7 @@ message ProtoOAGetTrendbarsRes {
     optional ProtoOAPayloadType    payloadType         = 1 [default = PROTO_OA_GET_TRENDBARS_RES];
     required int64                 ctidTraderAccountId = 2; // Unique identifier of the trader's account. Used to match responses to trader's accounts.
     required ProtoOATrendbarPeriod period              = 3; // Specifies period of trend bar series (e.g. M1, M10, etc.).
-    required int64                 timestamp           = 4; // Equals to toTimestamp from the request.
+    optional int64                 timestamp           = 4 [deprecated = true]; // Simply don't use this field, as your original request already contains toTimestamp.
     repeated ProtoOATrendbar       trendbar            = 5; // The list of trend bars.
     optional int64                 symbolId            = 6; // Unique identifier of the Symbol in cTrader platform.
 }
@@ -1311,8 +1321,8 @@ message ProtoOAGetTickDataReq
     required int64              ctidTraderAccountId = 2; // Unique identifier of the trading account. Used to match responses to trading accounts.
     required int64              symbolId            = 3; // Unique identifier of the Symbol in cTrader platform.
     required ProtoOAQuoteType   type                = 4; // Bid/Ask (1/2).
-    required int64              fromTimestamp       = 5; // The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
-    required int64              toTimestamp         = 6; // The Unix time in milliseconds of finishing the search. <= 2147483646000 (19th Jan 2038).
+    optional int64              fromTimestamp       = 5; // The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970).
+    optional int64              toTimestamp         = 6; // The Unix time in milliseconds of finishing the search. <= 2147483646000 (19th Jan 2038).
 }
 
 // Response to the ProtoOAGetTickDataReq request.
@@ -1401,7 +1411,7 @@ message ProtoOAAccountLogoutReq
     required int64              ctidTraderAccountId = 2; // The unique identifier of the trading account in cTrader platform.
 }
 
-// Response to the ProtoOATraderLogoutReq request.
+// Response to the ProtoOATraderLogoutReq request. Actual logout of trading account will be completed on ProtoOAAccountDisconnectEvent.
 message ProtoOAAccountLogoutRes
 {
     optional ProtoOAPayloadType payloadType         = 1  [default = PROTO_OA_ACCOUNT_LOGOUT_RES];
@@ -1527,8 +1537,8 @@ message ProtoOADealListByPositionIdReq {
     optional ProtoOAPayloadType payloadType         = 1 [default = PROTO_OA_DEAL_LIST_BY_POSITION_ID_REQ];
     required int64              ctidTraderAccountId = 2; // Unique identifier of the trader's account. Used to match responses to trader's accounts.
     required int64              positionId          = 3; // The unique ID of the position.
-    required int64              fromTimestamp       = 4; // The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week).
-    required int64              toTimestamp         = 5; // The Unix time in milliseconds of finishing the search. <= 2147483646000 (19th Jan 2038).
+    optional int64              fromTimestamp       = 4; // The Unix time in milliseconds of starting the search. Must be bigger or equal to zero (1st Jan 1970).
+    optional int64              toTimestamp         = 5; // The Unix time in milliseconds of finishing the search. <= 2147483646000 (19th Jan 2038).
 }
 
 // Response to the ProtoOADealListByPositionIdReq request.
@@ -1559,8 +1569,8 @@ message ProtoOAOrderListByPositionIdReq {
     optional ProtoOAPayloadType payloadType         = 1 [default = PROTO_OA_ORDER_LIST_BY_POSITION_ID_REQ];
     required int64              ctidTraderAccountId = 2; // Unique identifier of the trader's account. Used to match responses to trader's accounts.
     required int64              positionId          = 3; // The unique ID of the Position.
-    required int64              fromTimestamp       = 4; // The Unix time from which the search starts >=0 (1st Jan 1970). Validation: toTimestamp - fromTimestamp <= 604800000 (1 week). Search by utcLastUpdateTimestamp of the Order.
-    required int64              toTimestamp         = 5; // The Unix time where to stop searching <= 2147483646000 (19th Jan 2038). Search by utcLastUpdateTimestamp of the Order.
+    optional int64              fromTimestamp       = 4; // The Unix time from which the search starts >=0 (1st Jan 1970). Search by utcLastUpdateTimestamp of the Order.
+    optional int64              toTimestamp         = 5; // The Unix time where to stop searching <= 2147483646000 (19th Jan 2038). Search by utcLastUpdateTimestamp of the Order.
 }
 
 // Response to ProtoOAOrderListByPositionIdReq request.
