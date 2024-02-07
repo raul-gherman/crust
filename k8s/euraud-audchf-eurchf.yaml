@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: euraud-audchf-eurchf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: euraud-audchf-eurchf
+  template:
+    metadata:
+      labels:
+        app: euraud-audchf-eurchf
+      annotations:
+    spec:
+      securityContext:
+        fsGroup: 65534
+      containers:
+        - name: euraud-audchf-eurchf
+          image: crust:20240206
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RUST_LOG
+              value: INFO
+            - name: CTRADER_ENDPOINT
+              value: "wss://demo.ctraderapi.com:5035"
+            - name: ACCESS_TOKEN
+              value: "W4b85kgJavfypHtOS27dtR65i1tbOWuv2ZSMPHyJSFs"
+            - name: CLIENT_ID
+              value: "8081_EFPr88jrGEv7YHfCeF3MTDs6xArJoeWnTQCGxQdludY1OJfwRd"
+            - name: CLIENT_SECRET
+              value: "h2SZcXsPL1s3QhSWIxjtB0ZeEx184bfI4CQoFly5DQsqMKzZEP"
+            - name: SYMBOL_1_ID
+              value: "14"
+            - name: SYMBOL_2_ID
+              value: "23"
+            - name: SYMBOL_3_ID
+              value: "10"
+            - name: THRESHOLD
+              value: "-40"
+          resources:
+            limits:
+              memory: 100Mi
+              cpu: 50m
+            requests:
+              cpu: 50m
+              memory: 100Mi

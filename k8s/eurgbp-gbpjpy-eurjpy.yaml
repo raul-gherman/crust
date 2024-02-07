@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eurgbp-gbpjpy-eurjpy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eurgbp-gbpjpy-eurjpy
+  template:
+    metadata:
+      labels:
+        app: eurgbp-gbpjpy-eurjpy
+      annotations:
+    spec:
+      securityContext:
+        fsGroup: 65534
+      containers:
+        - name: eurgbp-gbpjpy-eurjpy
+          image: crust:20240206
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RUST_LOG
+              value: INFO
+            - name: CTRADER_ENDPOINT
+              value: "wss://demo.ctraderapi.com:5035"
+            - name: ACCESS_TOKEN
+              value: "W4b85kgJavfypHtOS27dtR65i1tbOWuv2ZSMPHyJSFs"
+            - name: CLIENT_ID
+              value: "8081_EFPr88jrGEv7YHfCeF3MTDs6xArJoeWnTQCGxQdludY1OJfwRd"
+            - name: CLIENT_SECRET
+              value: "h2SZcXsPL1s3QhSWIxjtB0ZeEx184bfI4CQoFly5DQsqMKzZEP"
+            - name: SYMBOL_1_ID
+              value: "9"
+            - name: SYMBOL_2_ID
+              value: "7"
+            - name: SYMBOL_3_ID
+              value: "3"
+            - name: THRESHOLD
+              value: "-40"
+          resources:
+            limits:
+              memory: 100Mi
+              cpu: 50m
+            requests:
+              cpu: 50m
+              memory: 100Mi
