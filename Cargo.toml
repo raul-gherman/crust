@@ -2,7 +2,7 @@
 authors = ["raul-gherman"]
 edition = "2021"
 name = "crust"
-version = "8.8.0"
+version = "8.9.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -10,7 +10,8 @@ version = "8.8.0"
 chrono = "0.4.31"
 derivative = "2.2.0"
 env_logger = "0.10.0"
+envmnt = "0.10.4"
 log = "0.4.20"
 prost = "0.12.3"
-tungstenite = {version = "0.20.1", features = ["native-tls"]}
+tungstenite = { version = "0.21.0", features = ["native-tls"] }
 url = "2.2.2"
