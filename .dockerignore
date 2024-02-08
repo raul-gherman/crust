@@ -1,0 +1,10 @@
+.circleci/
+.vscode/
+k8s/
+notes/
+target/
+.dockerignore
+.gitignore
+containerfile
+Dockerfile
+run.sh

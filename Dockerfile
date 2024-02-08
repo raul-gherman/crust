@@ -3,7 +3,7 @@ FROM ubuntu:latest as build
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.70.0
+    RUST_VERSION=1.75.0
 
 RUN apt-get update && \
     apt-get install -y \
@@ -65,6 +65,10 @@ RUN apt-get update && \
     libssl-dev \
     ca-certificates \
     && apt-get clean
+
+RUN useradd -ms /bin/bash technimal
+USER technimal
+WORKDIR /home/technimal
 
 # copy the build artifact from the build stage
 COPY --from=build /crust/target/release/crust .
