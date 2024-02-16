@@ -17,7 +17,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: audusd-usdchf-audchf
-          image: crust:20240206
+          image: crust:20240216-2
           imagePullPolicy: IfNotPresent
           env:
             - name: RUST_LOG
@@ -38,6 +38,8 @@ spec:
               value: "23"
             - name: THRESHOLD
               value: "-40"
+            - name: FIX_VOLUME
+              value: "1000000"
           resources:
             limits:
               memory: 100Mi

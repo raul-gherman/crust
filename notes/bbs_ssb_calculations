@@ -1,2 +1,0 @@
-BBS=(1-(A.ask x B.ask) / C.Bid) x 10_000
-SSB=(((A.bid x B.bid) / C.ask) -1) x 10_000

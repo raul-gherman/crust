@@ -1,26 +1,32 @@
 use crate::ctrader_open_api::ProtoOaNewOrderReq;
-use crate::encoder::*;
 use crate::symbol::Symbol;
+use log::info;
 use prost::Message;
 
-pub fn symbol_3_open_buy(symbol_3: &mut Symbol, volume: i64) -> Vec<u8> {
-    let symbol_3_buy_order_request = ProtoOaNewOrderReq {
+pub fn buy(
+    ctid: i64,
+    symbol: &mut Symbol,
+    volume: i64,
+    comment: String,
+    label: &String,
+) -> Vec<u8> {
+    let request = ProtoOaNewOrderReq {
         payload_type: Some(2106),
-        ctid_trader_account_id: 1,
-        symbol_id: symbol_3.id,
+        ctid_trader_account_id: ctid,
+        symbol_id: symbol.id,
         order_type: 2,
         trade_side: 1,
         volume,
-        limit_price: Some(111.0),
+        limit_price: Some(symbol.ask / 100000.00),
         stop_price: None,
         time_in_force: None,
         expiration_timestamp: None,
         stop_loss: None,
         take_profit: None,
-        comment: Some(String::from("comment")),
+        comment: Some(comment.to_string()),
         base_slippage_price: None,
         slippage_in_points: None,
-        label: Some(String::from("label")),
+        label: Some(label.to_string()),
         position_id: None,
         client_order_id: None,
         relative_stop_loss: None,
@@ -29,30 +35,34 @@ pub fn symbol_3_open_buy(symbol_3: &mut Symbol, volume: i64) -> Vec<u8> {
         trailing_stop_loss: None,
         stop_trigger_method: None,
     };
-    encode_proto_message_to_byte_vector(
-        symbol_3_buy_order_request.payload_type.unwrap() as u32,
-        symbol_3_buy_order_request.encode_to_vec(),
-    )
+    info!("ProtoOaNewOrderReq buy: {:#?}", &request);
+    request.encode_to_vec()
 }
 
-pub fn symbol_3_open_sell(symbol_3: &mut Symbol) -> Vec<u8> {
-    let symbol_3_sell_order_request = ProtoOaNewOrderReq {
+pub fn sell(
+    ctid: i64,
+    symbol: &mut Symbol,
+    volume: i64,
+    comment: String,
+    label: &String,
+) -> Vec<u8> {
+    let request = ProtoOaNewOrderReq {
         payload_type: Some(2106),
-        ctid_trader_account_id: 1,
-        symbol_id: symbol_3.id,
+        ctid_trader_account_id: ctid,
+        symbol_id: symbol.id,
         order_type: 2,
         trade_side: 2,
-        volume: 10000,
-        limit_price: Some(111.0),
+        volume,
+        limit_price: Some(symbol.bid / 100000.00),
         stop_price: None,
         time_in_force: None,
         expiration_timestamp: None,
         stop_loss: None,
         take_profit: None,
-        comment: Some(String::from("comment")),
+        comment: Some(comment.to_string()),
         base_slippage_price: None,
         slippage_in_points: None,
-        label: Some(String::from("label")),
+        label: Some(label.to_string()),
         position_id: None,
         client_order_id: None,
         relative_stop_loss: None,
@@ -61,8 +71,6 @@ pub fn symbol_3_open_sell(symbol_3: &mut Symbol) -> Vec<u8> {
         trailing_stop_loss: None,
         stop_trigger_method: None,
     };
-    encode_proto_message_to_byte_vector(
-        symbol_3_sell_order_request.payload_type.unwrap() as u32,
-        symbol_3_sell_order_request.encode_to_vec(),
-    )
+    info!("ProtoOaNewOrderReq sell: {:#?}", &request);
+    request.encode_to_vec()
 }
