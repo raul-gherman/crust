@@ -25,7 +25,7 @@ spec:
             - name: CTRADER_ENDPOINT
               value: "wss://demo.ctraderapi.com:5035"
             - name: ACCESS_TOKEN
-              value: "W4b85kgJavfypHtOS27dtR65i1tbOWuv2ZSMPHyJSFs"
+              value: "dqysoc1Y79TjMPu2Jnua8U9Sh4CtAPTpWbFlyaLHAaU"
             - name: CLIENT_ID
               value: "8081_EFPr88jrGEv7YHfCeF3MTDs6xArJoeWnTQCGxQdludY1OJfwRd"
             - name: CLIENT_SECRET
@@ -40,6 +40,8 @@ spec:
               value: "-40"
             - name: FIX_VOLUME
               value: "1000000"
+            - name: CTID_TRADER_ACCOUNT_ID
+              value: "38057227"
           resources:
             limits:
               memory: 100Mi
