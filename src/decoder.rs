@@ -68,24 +68,20 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                 match ProtoMessage::decode(tungstenite_envelope.into_data().as_slice()) {
                     Ok(incoming_proto_message) => match incoming_proto_message.payload {
                         Some(incoming_message_payload) => {
+                            let buf = incoming_message_payload.as_slice();
                             match &incoming_proto_message.payload_type {
                                 5 => {
                                     info!("5");
                                 }
-                                50 => {
-                                    match ProtoErrorRes::decode(incoming_message_payload.as_slice())
-                                    {
-                                        Ok(incoming_message) => {
-                                            info!("{:#?}", &incoming_message);
-                                        }
-                                        Err(e) => {
-                                            error!("decoding ProtoErrorRes: {:#?}", e);
-                                        }
+                                50 => match ProtoErrorRes::decode(buf) {
+                                    Ok(incoming_message) => {
+                                        info!("{:#?}", &incoming_message);
                                     }
-                                }
-                                51 => match ProtoHeartbeatEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                    Err(e) => {
+                                        error!("decoding ProtoErrorRes: {:#?}", e);
+                                    }
+                                },
+                                51 => match ProtoHeartbeatEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                         let outgoing_message: ProtoHeartbeatEvent =
@@ -103,9 +99,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoHeartbeatEvent: {:#?}", e);
                                     }
                                 },
-                                2101 => match ProtoOaApplicationAuthRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2101 => match ProtoOaApplicationAuthRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
 
@@ -125,9 +119,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaApplicationAuthRes: {:#?}", e);
                                     }
                                 },
-                                2103 => match ProtoOaAccountAuthRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2103 => match ProtoOaAccountAuthRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
 
@@ -148,9 +140,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaAccountAuthRes: {:#?}", e);
                                     }
                                 },
-                                2105 => match ProtoOaVersionRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2105 => match ProtoOaVersionRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -158,9 +148,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaVersionRes: {:#?}", e);
                                     }
                                 },
-                                2107 => match ProtoOaTrailingSlChangedEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2107 => match ProtoOaTrailingSlChangedEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -168,9 +156,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaTrailingSlChangedEvent: {:#?}", e);
                                     }
                                 },
-                                2113 => match ProtoOaAssetListRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2113 => match ProtoOaAssetListRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -178,9 +164,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaAssetListRes: {:#?}", e);
                                     }
                                 },
-                                2115 => match ProtoOaSymbolsListRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2115 => match ProtoOaSymbolsListRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -188,9 +172,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaSymbolsListRes: {:#?}", e);
                                     }
                                 },
-                                2117 => match ProtoOaSymbolByIdRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2117 => match ProtoOaSymbolByIdRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -198,9 +180,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaSymbolByIdRes: {:#?}", e);
                                     }
                                 },
-                                2119 => match ProtoOaSymbolsForConversionRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2119 => match ProtoOaSymbolsForConversionRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -208,9 +188,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaSymbolsForConversionRes: {:#?}", e);
                                     }
                                 },
-                                2120 => match ProtoOaSymbolChangedEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2120 => match ProtoOaSymbolChangedEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -218,9 +196,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaSymbolChangedEvent: {:#?}", e);
                                     }
                                 },
-                                2122 => match ProtoOaTraderRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2122 => match ProtoOaTraderRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -228,9 +204,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaTraderRes: {:#?}", e);
                                     }
                                 },
-                                2123 => match ProtoOaTraderUpdatedEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2123 => match ProtoOaTraderUpdatedEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -238,9 +212,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaTraderUpdatedEvent: {:#?}", e);
                                     }
                                 },
-                                2125 => match ProtoOaReconcileRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2125 => match ProtoOaReconcileRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("ProtoOaReconcileRes");
 
@@ -278,9 +250,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaReconcileRes: {:#?}", e);
                                     }
                                 },
-                                2126 => match ProtoOaExecutionEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2126 => match ProtoOaExecutionEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         execution_event_processor::process(
                                             &incoming_message,
@@ -297,9 +267,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaExecutionEvent: {:#?}", e);
                                     }
                                 },
-                                2128 => match ProtoOaSubscribeSpotsRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2128 => match ProtoOaSubscribeSpotsRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -307,9 +275,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaSubscribeSpotsRes: {:#?}", e);
                                     }
                                 },
-                                2130 => match ProtoOaUnsubscribeSpotsRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2130 => match ProtoOaUnsubscribeSpotsRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -317,9 +283,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaUnsubscribeSpotsRes: {:#?}", e);
                                     }
                                 },
-                                2131 => match ProtoOaSpotEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2131 => match ProtoOaSpotEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         spot_event_processor::process(
                                             socket,
@@ -343,9 +307,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaSpotEvent: {:#?}", e);
                                     }
                                 },
-                                2132 => match ProtoOaOrderErrorEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2132 => match ProtoOaOrderErrorEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -353,9 +315,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaOrderErrorEvent: {:#?}", e);
                                     }
                                 },
-                                2134 => match ProtoOaDealListRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2134 => match ProtoOaDealListRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -363,9 +323,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaDealListRes: {:#?}", e);
                                     }
                                 },
-                                2138 => match ProtoOaGetTrendbarsRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2138 => match ProtoOaGetTrendbarsRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -373,9 +331,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaGetTrendbarsRes: {:#?}", e);
                                     }
                                 },
-                                2140 => match ProtoOaExpectedMarginRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2140 => match ProtoOaExpectedMarginRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message);
                                     }
@@ -383,9 +339,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaExpectedMarginRes: {:#?}", e);
                                     }
                                 },
-                                2141 => match ProtoOaMarginChangedEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2141 => match ProtoOaMarginChangedEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -394,8 +348,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                     }
                                 },
                                 2142 => {
-                                    match ProtoErrorRes::decode(incoming_message_payload.as_slice())
-                                    {
+                                    match ProtoErrorRes::decode(buf) {
                                         Ok(incoming_message) => {
                                             info!("{:#?}", &incoming_message)
                                             // TODO: match all error codes
@@ -405,9 +358,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         }
                                     }
                                 }
-                                2144 => match ProtoOaGetTickDataRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2144 => match ProtoOaGetTickDataRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -415,9 +366,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaGetTickDataRes: {:#?}", e);
                                     }
                                 },
-                                2146 => match ProtoOaMarginChangedEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2146 => match ProtoOaMarginChangedEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -426,9 +375,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                     }
                                 },
                                 2147 => {
-                                    match ProtoOaAccountsTokenInvalidatedEvent::decode(
-                                        incoming_message_payload.as_slice(),
-                                    ) {
+                                    match ProtoOaAccountsTokenInvalidatedEvent::decode(buf) {
                                         Ok(incoming_message) => {
                                             info!("{:#?}", &incoming_message)
                                         }
@@ -437,9 +384,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         }
                                     }
                                 }
-                                2148 => match ProtoOaClientDisconnectEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2148 => match ProtoOaClientDisconnectEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -448,9 +393,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                     }
                                 },
                                 2150 => {
-                                    match ProtoOaGetAccountListByAccessTokenRes::decode(
-                                        incoming_message_payload.as_slice(),
-                                    ) {
+                                    match ProtoOaGetAccountListByAccessTokenRes::decode(buf) {
                                         Ok(incoming_message) => {
                                             info!("{:#?}", &incoming_message);
 
@@ -476,9 +419,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         }
                                     }
                                 }
-                                2152 => match ProtoOaGetCtidProfileByTokenRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2152 => match ProtoOaGetCtidProfileByTokenRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -489,9 +430,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         );
                                     }
                                 },
-                                2154 => match ProtoOaAssetClassListRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2154 => match ProtoOaAssetClassListRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -499,9 +438,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaAssetClassListRes: {:#?}", e);
                                     }
                                 },
-                                2155 => match ProtoOaDepthEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2155 => match ProtoOaDepthEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -509,9 +446,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaDepthEvent: {:#?}", e);
                                     }
                                 },
-                                2157 => match ProtoOaSubscribeDepthQuotesRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2157 => match ProtoOaSubscribeDepthQuotesRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -519,9 +454,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaSubscribeDepthQuotesRes: {:#?}", e);
                                     }
                                 },
-                                2159 => match ProtoOaUnsubscribeDepthQuotesRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2159 => match ProtoOaUnsubscribeDepthQuotesRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -532,9 +465,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         );
                                     }
                                 },
-                                2161 => match ProtoOaSymbolCategoryListRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2161 => match ProtoOaSymbolCategoryListRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -542,9 +473,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaSymbolCategoryListRes: {:#?}", e);
                                     }
                                 },
-                                2163 => match ProtoOaAccountLogoutRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2163 => match ProtoOaAccountLogoutRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -552,19 +481,28 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaAccountLogoutRes: {:#?}", e);
                                     }
                                 },
-                                2164 => match ProtoOaAccountDisconnectEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2164 => match ProtoOaAccountDisconnectEvent::decode(buf) {
                                     Ok(incoming_message) => {
-                                        info!("{:#?}", &incoming_message)
+                                        info!("{:#?}", &incoming_message);
+                                        let outgoing_message = ProtoOaAccountAuthReq {
+                                            payload_type: Some(2102),
+                                            ctid_trader_account_id: incoming_message
+                                                .ctid_trader_account_id,
+                                            access_token: access_token.to_string(),
+                                        };
+
+                                        info!("{:#?}", &outgoing_message);
+                                        send(
+                                            socket,
+                                            outgoing_message.payload_type.unwrap() as u32,
+                                            outgoing_message.encode_to_vec(),
+                                        );
                                     }
                                     Err(e) => {
                                         error!("decoding ProtoOaAccountDisconnectEvent: {:#?}", e);
                                     }
                                 },
-                                2165 => match ProtoOaSubscribeLiveTrendbarRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2165 => match ProtoOaSubscribeLiveTrendbarRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -575,9 +513,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         );
                                     }
                                 },
-                                2166 => match ProtoOaUnsubscribeLiveTrendbarRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2166 => match ProtoOaUnsubscribeLiveTrendbarRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -588,9 +524,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         );
                                     }
                                 },
-                                2168 => match ProtoOaMarginCallListRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2168 => match ProtoOaMarginCallListRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -598,9 +532,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaMarginCallListRes: {:#?}", e);
                                     }
                                 },
-                                2170 => match ProtoOaMarginCallUpdateRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2170 => match ProtoOaMarginCallUpdateRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -608,9 +540,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaMarginCallUpdateRes: {:#?}", e);
                                     }
                                 },
-                                2171 => match ProtoOaMarginCallUpdateEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2171 => match ProtoOaMarginCallUpdateEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -618,9 +548,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaMarginCallUpdateEvent: {:#?}", e);
                                     }
                                 },
-                                2172 => match ProtoOaMarginCallTriggerEvent::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2172 => match ProtoOaMarginCallTriggerEvent::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -628,9 +556,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaMarginCallTriggerEvent: {:#?}", e);
                                     }
                                 },
-                                2174 => match ProtoOaRefreshTokenRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2174 => match ProtoOaRefreshTokenRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -638,9 +564,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaRefreshTokenRes: {:#?}", e);
                                     }
                                 },
-                                2176 => match ProtoOaOrderListRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2176 => match ProtoOaOrderListRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -648,9 +572,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaOrderListRes: {:#?}", e);
                                     }
                                 },
-                                2178 => match ProtoOaGetDynamicLeverageByIdRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2178 => match ProtoOaGetDynamicLeverageByIdRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -661,9 +583,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         );
                                     }
                                 },
-                                2180 => match ProtoOaDealListByPositionIdRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2180 => match ProtoOaDealListByPositionIdRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -671,9 +591,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaDealListByPositionIdRes: {:#?}", e);
                                     }
                                 },
-                                2182 => match ProtoOaOrderDetailsRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2182 => match ProtoOaOrderDetailsRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -681,9 +599,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         error!("decoding ProtoOaOrderDetailsRes: {:#?}", e);
                                     }
                                 },
-                                2184 => match ProtoOaOrderListByPositionIdRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2184 => match ProtoOaOrderListByPositionIdRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -694,9 +610,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                         );
                                     }
                                 },
-                                2186 => match ProtoOaDealOffsetListRes::decode(
-                                    incoming_message_payload.as_slice(),
-                                ) {
+                                2186 => match ProtoOaDealOffsetListRes::decode(buf) {
                                     Ok(incoming_message) => {
                                         info!("{:#?}", &incoming_message)
                                     }
@@ -705,9 +619,7 @@ pub fn decode_incoming_message(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>
                                     }
                                 },
                                 2188 => {
-                                    match ProtoOaGetPositionUnrealizedPnLRes::decode(
-                                        incoming_message_payload.as_slice(),
-                                    ) {
+                                    match ProtoOaGetPositionUnrealizedPnLRes::decode(buf) {
                                         Ok(incoming_message) => {
                                             info!("{:#?}", &incoming_message)
                                         }

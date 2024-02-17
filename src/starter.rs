@@ -1,4 +1,4 @@
-use crate::ctrader_open_api::{ProtoOaApplicationAuthReq, ProtoOaPayloadType};
+use crate::ctrader_open_api::ProtoOaApplicationAuthReq;
 use crate::decoder::decode_incoming_message;
 use crate::sender::send;
 
@@ -27,7 +27,7 @@ pub fn start() {
             let client_secret = env::var("CLIENT_SECRET").expect("$CLIENT_SECRET not set");
 
             let outgoing_message = ProtoOaApplicationAuthReq {
-                payload_type: Some(ProtoOaPayloadType::ProtoOaApplicationAuthReq.into()),
+                payload_type: Some(2100),
                 client_id: client_id.to_string(),
                 client_secret: client_secret.to_string(),
             };

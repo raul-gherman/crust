@@ -21,19 +21,31 @@ pub fn process<'a>(
     match incoming_message.execution_type() {
         ProtoOaExecutionType::OrderAccepted => match &incoming_message.order {
             Some(o) => {
-                if o.trade_data.label() == bbs_label {
-                    info!(
-                        "ProtoOaExecutionType::OrderAccepted: + bbs_order: {:#?}",
-                        &o
-                    );
-                    bbs_orders.insert(o.order_id, o.clone());
-                }
-                if o.trade_data.label() == ssb_label {
-                    info!(
-                        "ProtoOaExecutionType::OrderAccepted: + ssb_order: {:#?}",
-                        &o
-                    );
-                    ssb_orders.insert(o.order_id, o.clone());
+                match o.order_type() {
+                    ProtoOaOrderType::Market
+                    | ProtoOaOrderType::MarketRange
+                    | ProtoOaOrderType::StopLossTakeProfit => {
+                        // TODO
+                    }
+
+                    ProtoOaOrderType::Limit
+                    | ProtoOaOrderType::Stop
+                    | ProtoOaOrderType::StopLimit => {
+                        if o.trade_data.label() == bbs_label {
+                            info!(
+                                "ProtoOaExecutionType::OrderAccepted: + bbs_order: {:#?}",
+                                &o
+                            );
+                            bbs_orders.insert(o.order_id, o.clone());
+                        }
+                        if o.trade_data.label() == ssb_label {
+                            info!(
+                                "ProtoOaExecutionType::OrderAccepted: + ssb_order: {:#?}",
+                                &o
+                            );
+                            ssb_orders.insert(o.order_id, o.clone());
+                        }
+                    }
                 }
             }
             None => (),
@@ -128,82 +140,73 @@ pub fn process<'a>(
             }
         }
 
-        ProtoOaExecutionType::OrderReplaced => {
-            //info!("OrderReplaced");
-            match &incoming_message.order {
-                Some(o) => {
-                    if o.trade_data.label() == bbs_label {
-                        if bbs_orders.contains_key(&o.order_id) {
-                            info!(
-                                "ProtoOaExecutionType::OrderReplaced: - bbs_order: {:#?}",
-                                &o
-                            );
-                            bbs_orders.remove(&o.order_id);
-                        }
-                        info!(
-                            "ProtoOaExecutionType::OrderReplaced: + bbs_order: {:#?}",
-                            &o
-                        );
-                        bbs_orders.insert(o.order_id, o.clone());
-                    }
-                    if o.trade_data.label() == ssb_label {
-                        if ssb_orders.contains_key(&o.order_id) {
-                            info!(
-                                "ProtoOaExecutionType::OrderReplaced: - ssb_order: {:#?}",
-                                &o
-                            );
-                            ssb_orders.remove(&o.order_id);
-                        }
-                        info!(
-                            "ProtoOaExecutionType::OrderReplaced: + ssb_order: {:#?}",
-                            &o
-                        );
-                        ssb_orders.insert(o.order_id, o.clone());
-                    }
-                }
-                None => (),
-            }
-        }
-
-        ProtoOaExecutionType::OrderCancelled => {
-            //info!("OrderCancelled");
-            match &incoming_message.order {
-                Some(o) => {
+        ProtoOaExecutionType::OrderReplaced => match &incoming_message.order {
+            Some(o) => {
+                if o.trade_data.label() == bbs_label {
                     if bbs_orders.contains_key(&o.order_id) {
                         info!(
-                            "ProtoOaExecutionType::OrderCancelled: - bbs_order: {:#?}",
+                            "ProtoOaExecutionType::OrderReplaced: - bbs_order: {:#?}",
                             &o
                         );
                         bbs_orders.remove(&o.order_id);
                     }
+                    info!(
+                        "ProtoOaExecutionType::OrderReplaced: + bbs_order: {:#?}",
+                        &o
+                    );
+                    bbs_orders.insert(o.order_id, o.clone());
+                }
+                if o.trade_data.label() == ssb_label {
                     if ssb_orders.contains_key(&o.order_id) {
                         info!(
-                            "ProtoOaExecutionType::OrderCancelled: - ssb_order: {:#?}",
+                            "ProtoOaExecutionType::OrderReplaced: - ssb_order: {:#?}",
                             &o
                         );
                         ssb_orders.remove(&o.order_id);
                     }
+                    info!(
+                        "ProtoOaExecutionType::OrderReplaced: + ssb_order: {:#?}",
+                        &o
+                    );
+                    ssb_orders.insert(o.order_id, o.clone());
                 }
-                None => (),
             }
-        }
+            None => (),
+        },
 
-        ProtoOaExecutionType::OrderExpired => {
-            //info!("OrderExpired");
-            match &incoming_message.order {
-                Some(o) => {
-                    if bbs_orders.contains_key(&o.order_id) {
-                        info!("ProtoOaExecutionType::OrderExpired: - bbs_order: {:#?}", &o);
-                        bbs_orders.remove(&o.order_id);
-                    }
-                    if ssb_orders.contains_key(&o.order_id) {
-                        info!("ProtoOaExecutionType::OrderExpired: - ssb_order: {:#?}", &o);
-                        ssb_orders.remove(&o.order_id);
-                    }
+        ProtoOaExecutionType::OrderCancelled => match &incoming_message.order {
+            Some(o) => {
+                if bbs_orders.contains_key(&o.order_id) {
+                    info!(
+                        "ProtoOaExecutionType::OrderCancelled: - bbs_order: {:#?}",
+                        &o
+                    );
+                    bbs_orders.remove(&o.order_id);
                 }
-                None => (),
+                if ssb_orders.contains_key(&o.order_id) {
+                    info!(
+                        "ProtoOaExecutionType::OrderCancelled: - ssb_order: {:#?}",
+                        &o
+                    );
+                    ssb_orders.remove(&o.order_id);
+                }
             }
-        }
+            None => (),
+        },
+
+        ProtoOaExecutionType::OrderExpired => match &incoming_message.order {
+            Some(o) => {
+                if bbs_orders.contains_key(&o.order_id) {
+                    info!("ProtoOaExecutionType::OrderExpired: - bbs_order: {:#?}", &o);
+                    bbs_orders.remove(&o.order_id);
+                }
+                if ssb_orders.contains_key(&o.order_id) {
+                    info!("ProtoOaExecutionType::OrderExpired: - ssb_order: {:#?}", &o);
+                    ssb_orders.remove(&o.order_id);
+                }
+            }
+            None => (),
+        },
         ProtoOaExecutionType::OrderRejected => match &incoming_message.order {
             Some(o) => {
                 info!("ProtoOaExecutionType::OrderRejected: {:#?}", &o);

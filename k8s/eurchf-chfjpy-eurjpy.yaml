@@ -17,7 +17,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: eurchf-chfjpy-eurjpy
-          image: crust:20240216-2
+          image: crust:20240220
           imagePullPolicy: IfNotPresent
           env:
             - name: RUST_LOG

@@ -9,13 +9,13 @@ pub fn send(
     payload_type: u32,
     payload: Vec<u8>,
 ) {
-    let message = message::from(encode_proto_message_to_byte_vector(payload_type, payload));
-    match socket.send(message::from(message)) {
+    let encoded_message = message::from(encode_proto_message_to_byte_vector(payload_type, payload));
+    match socket.send(encoded_message) {
         Ok(()) => {
-            debug!("socket.send {:?}", &payload_type)
+            debug!("socket.send {:#?}", &payload_type)
         }
         Err(e) => {
-            error!("socket.send {:?} :: {:?}", &payload_type, &e);
+            error!("socket.send {:#?} :: {:#?}", &payload_type, &e);
         }
     }
 }
