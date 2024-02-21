@@ -10,13 +10,12 @@ pub fn send(
     payload_type: u32,
     payload: Vec<u8>,
 ) {
-    
     let message = ProtoMessage {
         payload_type: payload_type,
         payload: Some(payload),
         client_msg_id: None,
     };
-    
+
     let encoded_message = message::from(message.encode_to_vec());
     match socket.send(encoded_message) {
         Ok(()) => {

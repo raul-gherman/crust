@@ -1,11 +1,8 @@
-use crate::{
-    ctrader_open_api::{
-        ProtoOaExecutionEvent, ProtoOaExecutionType, ProtoOaOrder, ProtoOaOrderType,
-        ProtoOaPosition, ProtoOaPositionStatus,
-    },
-    flag::Flag,
+use crate::ctrader_open_api::{
+    ProtoOaExecutionEvent, ProtoOaExecutionType, ProtoOaOrder, ProtoOaOrderType, ProtoOaPosition,
+    ProtoOaPositionStatus,
 };
-use log::{error, info};
+use log::{debug, error, info, warn};
 use std::collections::HashMap;
 
 pub fn process<'a>(
@@ -16,7 +13,6 @@ pub fn process<'a>(
     ssb_positions: &mut HashMap<i64, ProtoOaPosition>,
     bbs_label: &String,
     ssb_label: &String,
-    flag: &mut Flag,
 ) {
     match incoming_message.execution_type() {
         ProtoOaExecutionType::OrderAccepted => match &incoming_message.order {
@@ -32,23 +28,19 @@ pub fn process<'a>(
                     | ProtoOaOrderType::Stop
                     | ProtoOaOrderType::StopLimit => {
                         if o.trade_data.label() == bbs_label {
-                            info!(
-                                "ProtoOaExecutionType::OrderAccepted: + bbs_order: {:#?}",
-                                &o
-                            );
+                            info!("ProtoOaExecutionType::OrderAccepted: add BBS {:#?}", &o);
                             bbs_orders.insert(o.order_id, o.clone());
                         }
                         if o.trade_data.label() == ssb_label {
-                            info!(
-                                "ProtoOaExecutionType::OrderAccepted: + ssb_order: {:#?}",
-                                &o
-                            );
+                            info!("ProtoOaExecutionType::OrderAccepted: add SSB {:#?}", &o);
                             ssb_orders.insert(o.order_id, o.clone());
                         }
                     }
                 }
             }
-            None => (),
+            None => {
+                warn!("ProtoOaExecutionType::OrderAccepted");
+            }
         },
 
         ProtoOaExecutionType::OrderFilled => {
@@ -57,26 +49,34 @@ pub fn process<'a>(
                     match p.position_status() {
                         ProtoOaPositionStatus::PositionStatusOpen => {
                             if p.trade_data.label() == bbs_label {
-                                info!("ProtoOaPositionStatus::PositionStatusOpen: + bbs_position: {:#?}", &p);
+                                info!(
+                                    "ProtoOaPositionStatus::PositionStatusOpen: add BBS {:#?}",
+                                    &p
+                                );
                                 bbs_positions.insert(p.position_id, p.clone());
                             }
                             if p.trade_data.label() == ssb_label {
-                                info!("ProtoOaPositionStatus::PositionStatusOpen: + ssb_position: {:#?}", &p);
+                                info!(
+                                    "ProtoOaPositionStatus::PositionStatusOpen: add SSB {:#?}",
+                                    &p
+                                );
                                 ssb_positions.insert(p.position_id, p.clone());
                             }
 
                             match &incoming_message.order {
                                 Some(o) => {
                                     if bbs_orders.contains_key(&o.order_id) {
-                                        info!("ProtoOaPositionStatus::PositionStatusOpen: - bbs_order: {:#?}", &o);
+                                        info!("ProtoOaPositionStatus::PositionStatusOpen: remove BBS {:#?}", &o);
                                         bbs_orders.remove(&o.order_id);
                                     }
                                     if ssb_orders.contains_key(&o.order_id) {
-                                        info!("ProtoOaPositionStatus::PositionStatusOpen: - ssb_order: {:#?}", &o);
+                                        info!("ProtoOaPositionStatus::PositionStatusOpen: remove SSB {:#?}", &o);
                                         ssb_orders.remove(&o.order_id);
                                     }
                                 }
-                                None => (),
+                                None => {
+                                    warn!("ProtoOaExecutionType::PositionStatusOpen");
+                                }
                             }
                         }
 
@@ -84,15 +84,17 @@ pub fn process<'a>(
                             match &incoming_message.position {
                                 Some(p) => {
                                     if bbs_positions.contains_key(&p.position_id) {
-                                        info!("ProtoOaPositionStatus::PositionStatusClosed: - bbs_position: {:#?}", &p);
+                                        info!("ProtoOaPositionStatus::PositionStatusClosed: remove BBS {:#?}", &p);
                                         bbs_positions.remove(&p.position_id);
                                     }
                                     if ssb_positions.contains_key(&p.position_id) {
-                                        info!("ProtoOaPositionStatus::PositionStatusClosed: - ssb_position: {:#?}", &p);
+                                        info!("ProtoOaPositionStatus::PositionStatusClosed: remove SSB {:#?}", &p);
                                         ssb_positions.remove(&p.position_id);
                                     }
                                 }
-                                None => (),
+                                None => {
+                                    warn!("ProtoOaExecutionType::PositionStatusClosed");
+                                }
                             }
                         }
 
@@ -110,17 +112,19 @@ pub fn process<'a>(
                                         | ProtoOaOrderType::Stop
                                         | ProtoOaOrderType::StopLimit => {
                                             if o.trade_data.label() == bbs_label {
-                                                info!("ProtoOaPositionStatus::PositionStatusCreated: + bbs_order: {:#?}", &o);
+                                                info!("ProtoOaPositionStatus::PositionStatusCreated: add BBS {:#?}", &o);
                                                 bbs_orders.insert(o.order_id, o.clone());
                                             }
                                             if o.trade_data.label() == ssb_label {
-                                                info!("ProtoOaPositionStatus::PositionStatusCreated: + ssb_order: {:#?}", &o);
+                                                info!("ProtoOaPositionStatus::PositionStatusCreated: add SSB {:#?}", &o);
                                                 ssb_orders.insert(o.order_id, o.clone());
                                             }
                                         }
                                     }
                                 }
-                                None => (),
+                                None => {
+                                    warn!("ProtoOaExecutionType::PositionStatusCreated");
+                                }
                             }
                         }
 
@@ -136,7 +140,9 @@ pub fn process<'a>(
                         }
                     }
                 }
-                None => (),
+                None => {
+                    warn!("ProtoOaExecutionType::PositionStatusError");
+                }
             }
         }
 
@@ -144,75 +150,63 @@ pub fn process<'a>(
             Some(o) => {
                 if o.trade_data.label() == bbs_label {
                     if bbs_orders.contains_key(&o.order_id) {
-                        info!(
-                            "ProtoOaExecutionType::OrderReplaced: - bbs_order: {:#?}",
-                            &o
-                        );
+                        info!("ProtoOaExecutionType::OrderReplaced: remove BBS {:#?}", &o);
                         bbs_orders.remove(&o.order_id);
                     }
-                    info!(
-                        "ProtoOaExecutionType::OrderReplaced: + bbs_order: {:#?}",
-                        &o
-                    );
+                    info!("ProtoOaExecutionType::OrderReplaced: add BBS {:#?}", &o);
                     bbs_orders.insert(o.order_id, o.clone());
                 }
                 if o.trade_data.label() == ssb_label {
                     if ssb_orders.contains_key(&o.order_id) {
-                        info!(
-                            "ProtoOaExecutionType::OrderReplaced: - ssb_order: {:#?}",
-                            &o
-                        );
+                        info!("ProtoOaExecutionType::OrderReplaced: remove SSB {:#?}", &o);
                         ssb_orders.remove(&o.order_id);
                     }
-                    info!(
-                        "ProtoOaExecutionType::OrderReplaced: + ssb_order: {:#?}",
-                        &o
-                    );
+                    info!("ProtoOaExecutionType::OrderReplaced: add SSB {:#?}", &o);
                     ssb_orders.insert(o.order_id, o.clone());
                 }
             }
-            None => (),
+            None => {
+                warn!("ProtoOaExecutionType::OrderReplaced");
+            }
         },
 
         ProtoOaExecutionType::OrderCancelled => match &incoming_message.order {
             Some(o) => {
                 if bbs_orders.contains_key(&o.order_id) {
-                    info!(
-                        "ProtoOaExecutionType::OrderCancelled: - bbs_order: {:#?}",
-                        &o
-                    );
+                    info!("ProtoOaExecutionType::OrderCancelled: remove BBS {:#?}", &o);
                     bbs_orders.remove(&o.order_id);
                 }
                 if ssb_orders.contains_key(&o.order_id) {
-                    info!(
-                        "ProtoOaExecutionType::OrderCancelled: - ssb_order: {:#?}",
-                        &o
-                    );
+                    info!("ProtoOaExecutionType::OrderCancelled: remove SSB {:#?}", &o);
                     ssb_orders.remove(&o.order_id);
                 }
             }
-            None => (),
+            None => {
+                warn!("ProtoOaExecutionType::OrderCancelled");
+            }
         },
 
         ProtoOaExecutionType::OrderExpired => match &incoming_message.order {
             Some(o) => {
                 if bbs_orders.contains_key(&o.order_id) {
-                    info!("ProtoOaExecutionType::OrderExpired: - bbs_order: {:#?}", &o);
+                    info!("ProtoOaExecutionType::OrderExpired: remove BBS {:#?}", &o);
                     bbs_orders.remove(&o.order_id);
                 }
                 if ssb_orders.contains_key(&o.order_id) {
-                    info!("ProtoOaExecutionType::OrderExpired: - ssb_order: {:#?}", &o);
+                    info!("ProtoOaExecutionType::OrderExpired: remove SSB {:#?}", &o);
                     ssb_orders.remove(&o.order_id);
                 }
             }
-            None => (),
+            None => {
+                warn!("ProtoOaExecutionType::OrderExpired");
+            }
         },
         ProtoOaExecutionType::OrderRejected => match &incoming_message.order {
             Some(o) => {
                 info!("ProtoOaExecutionType::OrderRejected: {:#?}", &o);
             }
             None => {
-                info!("ProtoOaExecutionType::OrderRejected");
+                warn!("ProtoOaExecutionType::OrderRejected");
             }
         },
 
@@ -221,25 +215,25 @@ pub fn process<'a>(
                 info!("ProtoOaExecutionType::OrderCancelRejected: {:#?}", &o);
             }
             None => {
-                info!("ProtoOaExecutionType::OrderCancelRejected");
+                warn!("ProtoOaExecutionType::OrderCancelRejected");
             }
         },
 
         ProtoOaExecutionType::Swap => match &incoming_message.order {
             Some(o) => {
-                info!("ProtoOaExecutionType::Swap: {:#?}", &o);
+                debug!("ProtoOaExecutionType::Swap: {:#?}", &o);
             }
             None => {
-                info!("ProtoOaExecutionType::Swap");
+                warn!("ProtoOaExecutionType::Swap");
             }
         },
 
         ProtoOaExecutionType::DepositWithdraw => match &incoming_message.order {
             Some(o) => {
-                info!("ProtoOaExecutionType::DepositWithdraw: {:#?}", &o);
+                debug!("ProtoOaExecutionType::DepositWithdraw: {:#?}", &o);
             }
             None => {
-                info!("ProtoOaExecutionType::DepositWithdraw");
+                warn!("ProtoOaExecutionType::DepositWithdraw");
             }
         },
 
@@ -248,28 +242,17 @@ pub fn process<'a>(
                 info!("ProtoOaExecutionType::OrderPartialFill: {:#?}", &o);
             }
             None => {
-                info!("ProtoOaExecutionType::OrderPartialFill");
+                warn!("ProtoOaExecutionType::OrderPartialFill");
             }
         },
 
         ProtoOaExecutionType::BonusDepositWithdraw => match &incoming_message.order {
             Some(o) => {
-                info!("ProtoOaExecutionType::BonusDepositWithdraw: {:#?}", &o);
+                debug!("ProtoOaExecutionType::BonusDepositWithdraw: {:#?}", &o);
             }
             None => {
-                info!("ProtoOaExecutionType::BonusDepositWithdraw");
+                warn!("ProtoOaExecutionType::BonusDepositWithdraw");
             }
         },
-    }
-    if bbs_orders.len() + bbs_positions.len() > 0 {
-        flag.bbs_flag = true
-    } else {
-        flag.bbs_flag = false
-    }
-
-    if ssb_orders.len() + ssb_positions.len() > 0 {
-        flag.ssb_flag = true
-    } else {
-        flag.ssb_flag = false
     }
 }

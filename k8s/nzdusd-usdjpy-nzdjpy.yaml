@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: nzdusd-usdjpy-nzdjpy
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: nzdusd-usdjpy-nzdjpy
@@ -17,7 +17,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: nzdusd-usdjpy-nzdjpy
-          image: crust:20240220
+          image: crust:20240222
           imagePullPolicy: IfNotPresent
           env:
             - name: RUST_LOG

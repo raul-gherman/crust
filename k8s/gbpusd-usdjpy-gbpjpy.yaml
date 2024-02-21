@@ -17,7 +17,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: gbpusd-usdjpy-gbpjpy
-          image: crust:20240220
+          image: crust:20240222
           imagePullPolicy: IfNotPresent
           env:
             - name: RUST_LOG

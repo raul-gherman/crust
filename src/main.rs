@@ -1,8 +1,6 @@
 mod ctrader_open_api;
 mod decoder;
-mod encoder;
 mod engagement;
-mod flag;
 mod processors;
 mod sender;
 mod starter;

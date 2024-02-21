@@ -6,13 +6,12 @@ use tungstenite::WebSocket;
 use log::info;
 
 use crate::{
-    ctrader_open_api::*,
+    ctrader_open_api::{ProtoOaOrder, ProtoOaPosition, ProtoOaSpotEvent},
     engagement::{close, open},
-    flag::Flag,
     symbol::Symbol,
 };
 
-use crate::sender::*;
+use crate::sender::send;
 
 pub fn process(
     socket: &mut WebSocket<MaybeTlsStream<TcpStream>>,
@@ -28,7 +27,6 @@ pub fn process(
     ssb_positions: &HashMap<i64, ProtoOaPosition>,
     bbs_label: &String,
     ssb_label: &String,
-    flag: &mut Flag,
 ) {
     if incoming_message.symbol_id != symbol_1.id
         && incoming_message.symbol_id != symbol_2.id
@@ -75,154 +73,148 @@ pub fn process(
         let ssb = 100000.0 - ((symbol_1.bid * symbol_2.bid) / symbol_3.ask);
 
         if bbs <= 0.0 {
-            match flag.ssb_flag {
-                true => {
-                    info!("BBS={} , close SSB", bbs);
-                    for (key, value) in ssb_orders {
-                        if value.trade_data.label() == ssb_label {
-                            send(
-                                socket,
-                                2108,
-                                close::pending_order(incoming_message.ctid_trader_account_id, *key),
-                            );
-                        }
-                    }
-                    for (key, value) in ssb_positions {
-                        if value.trade_data.label() == ssb_label {
-                            send(
-                                socket,
-                                2111,
-                                close::position(
-                                    incoming_message.ctid_trader_account_id,
-                                    *key,
-                                    value.trade_data.volume,
-                                ),
-                            );
-                        }
-                    }
-                }
-                false => {}
-            }
-
-            if bbs < *threshold {
+            if ssb_positions.len() + ssb_orders.len() > 0 {
                 info!(
                     "BBS: {} | symbol_1.ask: {} | symbol_2.ask: {} | symbol_3.bid: {}",
                     &bbs, &symbol_1.ask, &symbol_2.ask, &symbol_3.bid
                 );
+                for (key, value) in ssb_positions {
+                    if value.trade_data.label() == ssb_label {
+                        send(
+                            socket,
+                            2111,
+                            close::position(
+                                incoming_message.ctid_trader_account_id,
+                                *key,
+                                value.trade_data.volume,
+                            ),
+                        );
+                    }
+                }
+                for (key, value) in ssb_orders {
+                    if value.trade_data.label() == ssb_label {
+                        send(
+                            socket,
+                            2108,
+                            close::pending_order(incoming_message.ctid_trader_account_id, *key),
+                        );
+                    }
+                }
+            }
 
+            if bbs < *threshold {
                 let variable_volume =
                     ((((symbol_1.ask * fix_volume as f64) / 100_000.0) / 100_000.0).round())
                         * 100_000.0;
 
-                send(
-                    socket,
-                    2106,
-                    open::buy(
-                        incoming_message.ctid_trader_account_id,
-                        symbol_1,
-                        fix_volume,
-                        bbs.to_string(),
-                        bbs_label,
-                    ),
-                );
-                send(
-                    socket,
-                    2106,
-                    open::buy(
-                        incoming_message.ctid_trader_account_id,
-                        symbol_2,
-                        variable_volume as i64,
-                        bbs.to_string(),
-                        bbs_label,
-                    ),
-                );
-                send(
-                    socket,
-                    2106,
-                    open::sell(
-                        incoming_message.ctid_trader_account_id,
-                        symbol_3,
-                        fix_volume,
-                        bbs.to_string(),
-                        bbs_label,
-                    ),
-                );
+                if bbs_positions.len() + bbs_orders.len() == 0 {
+                    send(
+                        socket,
+                        2106,
+                        open::buy(
+                            incoming_message.ctid_trader_account_id,
+                            symbol_1,
+                            fix_volume,
+                            bbs.to_string(),
+                            bbs_label,
+                        ),
+                    );
+                    send(
+                        socket,
+                        2106,
+                        open::buy(
+                            incoming_message.ctid_trader_account_id,
+                            symbol_2,
+                            variable_volume as i64,
+                            bbs.to_string(),
+                            bbs_label,
+                        ),
+                    );
+                    send(
+                        socket,
+                        2106,
+                        open::sell(
+                            incoming_message.ctid_trader_account_id,
+                            symbol_3,
+                            fix_volume,
+                            bbs.to_string(),
+                            bbs_label,
+                        ),
+                    );
+                }
             }
         }
 
         if ssb <= 0.0 {
-            match flag.bbs_flag {
-                true => {
-                    info!("SSB={} , close BBS", ssb);
-                    for (key, value) in bbs_orders {
-                        if value.trade_data.label() == bbs_label {
-                            send(
-                                socket,
-                                2108,
-                                close::pending_order(incoming_message.ctid_trader_account_id, *key),
-                            );
-                        }
-                    }
-                    for (key, value) in bbs_positions {
-                        if value.trade_data.label() == bbs_label {
-                            send(
-                                socket,
-                                2111,
-                                close::position(
-                                    incoming_message.ctid_trader_account_id,
-                                    *key,
-                                    value.trade_data.volume,
-                                ),
-                            );
-                        }
-                    }
-                }
-                false => {}
-            }
-
-            if ssb < *threshold {
+            if bbs_positions.len() + bbs_orders.len() > 0 {
                 info!(
                     "SSB: {} | symbol_1.bid: {} | symbol_2.bid: {} | symbol_3.ask: {}",
                     &ssb, &symbol_1.bid, &symbol_2.bid, &symbol_3.ask
                 );
+                for (key, value) in bbs_positions {
+                    if value.trade_data.label() == bbs_label {
+                        send(
+                            socket,
+                            2111,
+                            close::position(
+                                incoming_message.ctid_trader_account_id,
+                                *key,
+                                value.trade_data.volume,
+                            ),
+                        );
+                    }
+                }
+                for (key, value) in bbs_orders {
+                    if value.trade_data.label() == bbs_label {
+                        send(
+                            socket,
+                            2108,
+                            close::pending_order(incoming_message.ctid_trader_account_id, *key),
+                        );
+                    }
+                }
+            }
 
+            if ssb < *threshold {
                 let variable_volume =
                     ((((symbol_1.bid * fix_volume as f64) / 100_000.0) / 100_000.0).round())
                         * 100_000.0;
 
-                send(
-                    socket,
-                    2106,
-                    open::sell(
-                        incoming_message.ctid_trader_account_id,
-                        symbol_1,
-                        fix_volume,
-                        ssb.to_string(),
-                        ssb_label,
-                    ),
-                );
-                send(
-                    socket,
-                    2106,
-                    open::sell(
-                        incoming_message.ctid_trader_account_id,
-                        symbol_2,
-                        variable_volume as i64,
-                        ssb.to_string(),
-                        ssb_label,
-                    ),
-                );
-                send(
-                    socket,
-                    2106,
-                    open::buy(
-                        incoming_message.ctid_trader_account_id,
-                        symbol_3,
-                        fix_volume,
-                        ssb.to_string(),
-                        ssb_label,
-                    ),
-                );
+                if ssb_positions.len() + ssb_orders.len() == 0 {
+                    send(
+                        socket,
+                        2106,
+                        open::sell(
+                            incoming_message.ctid_trader_account_id,
+                            symbol_1,
+                            fix_volume,
+                            ssb.to_string(),
+                            ssb_label,
+                        ),
+                    );
+                    send(
+                        socket,
+                        2106,
+                        open::sell(
+                            incoming_message.ctid_trader_account_id,
+                            symbol_2,
+                            variable_volume as i64,
+                            ssb.to_string(),
+                            ssb_label,
+                        ),
+                    );
+                    send(
+                        socket,
+                        2106,
+                        open::buy(
+                            incoming_message.ctid_trader_account_id,
+                            symbol_3,
+                            fix_volume,
+                            ssb.to_string(),
+                            ssb_label,
+                        ),
+                    );
+                }
             }
         }
     }
